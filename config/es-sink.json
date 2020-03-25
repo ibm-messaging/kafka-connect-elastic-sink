@@ -1,0 +1,13 @@
+{
+    "name": "es-sink",
+    "config":
+    {
+        "connector.class": "com.ibm.eventstreams.connect.essink.ESSinkConnector",
+        "tasks.max": "1",
+        "topics": "<TOPIC>",
+        "es.connection": "localhost:9200",
+        "es.document.builder": "com.ibm.eventstreams.connect.essink.builders.DefaultDocumentBuilder",
+        "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "value.converter": "org.apache.kafka.connect.storage.StringConverter"
+    }
+}
