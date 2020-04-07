@@ -79,6 +79,9 @@ public class ESSinkConnector extends SinkConnector {
   public static final String CONFIG_NAME_ES_DOCUMENT_BUILDER = "es.document.builder";
   public static final String CONFIG_DOCUMENTATION_ES_DOCUMENT_BUILDER = "The class used to build the document content.";
   public static final String CONFIG_DISPLAY_ES_DOCUMENT_BUILDER = "Document builder";
+  public static final String CONFIG_NAME_ES_INDEX_BUILDER = "es.index.builder";
+  public static final String CONFIG_DOCUMENTATION_ES_INDEX_BUILDER = "The class used to build the document index.";
+  public static final String CONFIG_DISPLAY_ES_INDEX_BUILDER = "Index builder";
 
   // Jetty configuration options
   public static final int DEFAULT_JETTY_MAX_CONNECTIONS = 5;
@@ -220,6 +223,8 @@ public class ESSinkConnector extends SinkConnector {
     // Message reformatting into Elasticsearch documents
     config.define(CONFIG_NAME_ES_DOCUMENT_BUILDER, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, Importance.MEDIUM, CONFIG_DOCUMENTATION_ES_DOCUMENT_BUILDER,
         CONFIG_GROUP_ES, 20, Width.MEDIUM, CONFIG_DISPLAY_ES_DOCUMENT_BUILDER);
+    config.define(CONFIG_NAME_ES_INDEX_BUILDER, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, Importance.MEDIUM, CONFIG_DOCUMENTATION_ES_INDEX_BUILDER,
+        CONFIG_GROUP_ES, 21, Width.MEDIUM, CONFIG_DISPLAY_ES_INDEX_BUILDER);
 
     // Jetty configuration parameters
     config.define(CONFIG_NAME_ES_JETTY_OPERATION_TIMEOUT_SEC, Type.INT, DEFAULT_JETTY_OPERATION_TIMEOUT_SEC, Importance.MEDIUM, CONFIG_DOCUMENTATION_ES_JETTY_OPERATION_TIMEOUT_SEC,

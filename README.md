@@ -70,7 +70,7 @@ installed Apache Kafka, you use a command like this:
 
 ``` shell
 $ export REPO=<path to cloned repository>
-$ export CLASSPATH=$CLASSPATH:$REPO/target/kafka-connect-es-sink-0.0.1-SNAPSHOT-jar-with-dependencies.jar
+$ export CLASSPATH=$CLASSPATH:$REPO/target/kafka-connect-es-sink-<version>-jar-with-dependencies.jar
 $ ./bin/connect-standalone.sh config/connect-standalone.properties $(REPO)/config/es-sink.properties
 ```
 
@@ -93,9 +93,9 @@ the address of the Elasticsearch server, and the Kafka topics that will
 be collected. You do not include the protocol (http or https) as part
 of the server address.
 
-The only other required property is the `es.document.builder` class
-which should not be changed unless you write your own Java class for an
-alternative document formatter.
+The only other required properties are the `es.document.builder` 
+and `es.index.builder` classes which should not be changed unless you write your 
+own Java classes for alternative document and index formatting.
 
 Additional properties allow for security configuration and tuning of how the
 calls are made to the Elasticsearch server.

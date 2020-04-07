@@ -13,7 +13,7 @@ RUN mkdir /opt/kafka/logs && chown esuser:esgroup /opt/kafka/logs
 
 # These are the key files needed from this repository to get something running. The hostnames in the
 # properties files reflect the docker-compose names
-COPY --chown=esuser:esgroup target/kafka-connect-es-sink-0.0.1-SNAPSHOT-jar-with-dependencies.jar /opt/kafka/libs/
+COPY --chown=esuser:esgroup target/kafka-connect-es-sink-*-jar-with-dependencies.jar /opt/kafka/libs/
 COPY --chown=esuser:esgroup quickstart/es-sink-qs.properties /opt/kafka/config
 COPY --chown=esuser:esgroup quickstart/connect-standalone-qs.properties /opt/kafka/config/
 
