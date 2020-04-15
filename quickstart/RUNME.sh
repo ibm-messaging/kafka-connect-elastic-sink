@@ -61,7 +61,7 @@ TOPIC=ESTESTSINK
 echo "Creating Kafka topic"
 # These hostnames are as seen from within the container (ie not 'localhost')
 docker-compose $project exec kafka \
- /opt/bitnami/kafka/bin/kafka-topics.sh --zookeeper=zookeeper:2181 \
+ /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
                   --create --topic $TOPIC \
                   --partitions 1  --replication-factor 1 >/dev/null 2>&1
 
@@ -69,16 +69,16 @@ docker-compose $project exec kafka \
 echo "Publishing to topic"
 docker-compose $project exec -T kafka  \
   /opt/bitnami/kafka/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic $TOPIC << EOF | sed "s/>//g"
-Event 0
-Event 1
-Event 2
-Event 3
-Event 4
-Event 5
-Event 6
-Event 7
-Event 8
-Event 9
+{"Event": "0"}
+{"Event": "1"}
+{"Event": "2"}
+{"Event": "3"}
+{"Event": "4"}
+{"Event": "5"}
+{"Event": "6"}
+{"Event": "7"}
+{"Event": "8"}
+{"Event": "9"}
 EOF
 echo
 
