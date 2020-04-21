@@ -53,6 +53,7 @@ To run the connector, you must have:
 * The JAR from building the connector
 * A properties file containing the configuration for the connector
 * Apache Kafka 2.0.0 or later, either standalone or included as part of an offering such as IBM Event Streams
+* Elasticsearch 7.0.0 or later
 
 The connector can be run in a Kafka Connect worker in either standalone
 (single process) or distributed mode. It's a good idea to start in standalone mode.
@@ -71,7 +72,7 @@ installed Apache Kafka, you use a command like this:
 ``` shell
 $ export REPO=<path to cloned repository>
 $ export CLASSPATH=$CLASSPATH:$REPO/target/kafka-connect-es-sink-<version>-jar-with-dependencies.jar
-$ ./bin/connect-standalone.sh config/connect-standalone.properties $(REPO)/config/es-sink.properties
+$ bin/connect-standalone.sh config/connect-standalone.properties $(REPO)/config/es-sink.properties
 ```
 
 ### Running in distributed mode
@@ -99,6 +100,40 @@ own Java classes for alternative document and index formatting.
 
 Additional properties allow for security configuration and tuning of how the
 calls are made to the Elasticsearch server.
+
+The configuration options for the Kafka Connect sink connector for Elasticsearch are as follows:
+
+| Name                         | Description                                                            | Type    | Default        | Valid values                                            |
+| ---------------------------- | ---------------------------------------------------------------------- | ------- | -------------- | ------------------------------------------------------- |
+| topics                       | A list of topics to use as input                                       | string  |                | topic1[,topic2,...]                                     |
+| es.connection                | The connection endpoint for Elasticsearch                              | string  |                | host:port                                               |
+| es.document.builder          | The class used to build the document content                           | string  |                | Class implementing DocumentBuilder                      |
+| es.identifier.builder        | The class used to build the document identifier                        | string  |                | Class implementing IdentifierBuilder                    |
+| es.index.builder             | The class used to build the document index                             | string  |                | Class implementing IndexBuilder                         |
+| key.converter                | The class used to convert Kafka record keys                            | string  |                | See below                                               |
+| value.converter              | The class used to convert Kafka record values                          | string  |                | See below                                               |
+| es.http.connections          | The maximum number of HTTP connections to Elasticsearch                | integer | 5              |                                                         |
+| es.http.timeout.idle         | Timeout (seconds) for idle HTTP connections to Elasticsearch           | integer | 30             |                                                         |
+| es.http.timeout.connection   | Time (seconds) allowed for initial HTTP connection to Elasticsearch    | integer | 10             |                                                         |
+| es.http.timeout.operation    | Time (seconds) allowed for calls to Elasticsearch                      | integer | 6              |                                                         |
+| es.max.failures              | Maximum number of failed attempts to commit an update to Elasticsearch | integer | 5              |                                                         |
+| es.http.proxy.host           | Hostname for HTTP proxy                                                | string  |                | Hostname                                                |
+| es.http.proxy.port           | Port number for HTTP proxy                                             | integer | 8080           | Port number                                             |
+| es.user.name                 | The user name for authenticating with Elasticsearch                    | string  |                |                                                         |
+| es.password                  | The password for authenticating with Elasticsearch                     | string  |                |                                                         |
+| es.tls.keystore.location     | The path to the JKS keystore to use for TLS connections                | string  | JVM keystore   | Local path to a JKS file                                |
+| es.tls.keystore.password     | The password of the JKS keystore to use for TLS connections            | string  |                |                                                         |
+| es.tls.truststore.location   | The path to the JKS truststore to use for TLS connections              | string  | JVM truststore | Local path to a JKS file                                |
+| es.tls.truststore.password   | The password of the JKS truststore to use for TLS connections          | string  |                |                                                         |
+
+### Supported configurations
+
+In order to ensure reliable indexing of documents, the following configurations are only supported with these values:
+
+| Name                         | Valid values                                                                                      |
+| ---------------------------- | ------------------------------------------------------------------------------------------------- |
+| key.converter                | `org.apache.kafka.connect.storage.StringConverter`, `org.apache.kafka.connect.json.JsonConverter` |
+| value.converter              | `org.apache.kafka.connect.json.JsonConverter`                                                     |
 
 ### Performance tuning
 Multiple instances of the connector can be run in parallel by setting the
@@ -139,30 +174,45 @@ es.password=${file:es-secret.properties:secret-key}
 ```
 
 ## Document formats
-The Elasticsearch document created by this connector is a JSON object.
-The object is created from the Kafka message as the `body` element, and is
-inserted as Elasticsearch type `_doc` to the store.
+The documents inserted into Elasticsearch by this connector are JSON objects. The conversion from
+the incoming Kafka records to the Elasticsearch documents is performed using a *document builder*.
+The supplied `JsonDocumentBuilder` converts the Kafka record's value into a document containing
+a JSON object. The connector inserts documents into the store using Elasticsearch type `_doc`.
 
-The Kafka schema and key values, if known, are also inserted as fields in the JSON object.
+To ensure the documents can be indexed reliably, the incoming Kafka records must also be JSON objects.
+This is ensured by setting the `value.converter` configuration to `org.apache.kafka.connect.json.JsonConverter`
+which only accepts well-formed JSON objects.
 
-The `key.converter` and `value.converter` classes are used by the connector
-framework to take the message from Kafka and convert it before it gets passed to
-this connector. These attributes are configured in the sample properties files
-to use String converters.
+The name of the Elasticsearch index is same as the Kafka topic name, converted into lower case with
+special characters replaced.
 
-### Document identification
-When inserting the document into Elasticsearch, an *index* and a unique *identifier*
-are needed. The identifier is used to ensure that if a document is inserted twice
-with the same identifier, only one copy of the document is stored (although a
-revision count for the document may be incremented).
+## Modes of operation
+There are two modes of operation based on whether you want each Kafka record to create a new document
+in Elasticsearch, or whether you want Kafka records with the same key to replace earlier versions of
+documents in Elasticsearch.
 
-In this implementation, the *index* is taken from the Kafka topic (flattened
-and lowercased).
+### Unique document ID
+By setting the `es.identifier.builder` configuration to `com.ibm.eventstreams.connect.essink.builders.DefaultIdentifierBuilder`,
+the document ID is a concatenation of the topic name, partition and record offset, for example `topic1!0!42`.
+This means that each Kafka record creates a unique document ID and will result in a separate document in
+Elasticsearch. The records do not need to have keys.
 
-The *identifier* is generated from a combination of the topic, Kafka offset,
-Kafka partition, and the message creation timestamp. That should make unique
-but repeatable identifiers so that if there is a problem and the connector
-restarts or goes through a retry process, the same document is recreated.
+This mode of operation is suitable if the Kafka records are independent events and you want each
+of them to be indexed in Elasticsearch separately.
+
+
+### Document ID based on Kafka record key
+By setting the `es.identifier.builder` configuration to `com.ibm.eventstreams.connect.essink.builders.KeyIdentifierBuilder`,
+each Kafka record replaces any existing document in Elasticsearch which has the same key. The Kafka record
+key is used as the document ID. This means the document IDs are only as unique as the Kafka record keys.
+The records must have keys.
+
+This mode of operation is suitable if the Kafka records represent data items identified by the record key,
+and where a sequence of records with the same key represent updates to a particular data item. In this case,
+you want the most recent version of the data item to be indexed. A record with an empty value is treated
+as deletion of the data item and results in deletion of a document with that key from the index.
+
+This mode of operation is suitable if you are using the change data capture technique.
 
 ## Issues and contributions
 For issues relating specifically to this connector, please use
