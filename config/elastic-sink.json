@@ -1,0 +1,16 @@
+{
+    "name": "elastic-sink",
+    "config":
+    {
+        "connector.class": "com.ibm.eventstreams.connect.elasticsink.ElasticSinkConnector",
+        "tasks.max": "1",
+        "topics": "<TOPIC>",
+        "es.connection": "localhost:9200",
+        "es.document.builder": "com.ibm.eventstreams.connect.elasticsink.builders.JsonDocumentBuilder",
+        "es.index.builder": "com.ibm.eventstreams.connect.elasticsink.builders.DefaultIndexBuilder",
+        "es.identifier.builder": "com.ibm.eventstreams.connect.elasticsink.builders.DefaultIdentifierBuilder",
+        "key.converter": "org.apache.kafka.connect.storage.StringConverter",
+        "value.converter": "org.apache.kafka.connect.json.JsonConverter",
+        "value.converter.schemas.enable": "false"
+    }
+}

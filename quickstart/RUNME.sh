@@ -15,7 +15,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# This script builds and creates a simple configuration for the Kafka Elasticsearch Connector
+# This script builds and creates a simple configuration for the Kafka Connect sink connector for Elasticsearch
 #
 # Configuration files in this directory are used as part of the process - they are slightly different
 # from the configuration files elsewhere in the repository, as they can use hostnames from the docker-compose
@@ -32,6 +32,7 @@ curdir=`pwd`
 rc=0
 
 cd ..
+
 # Compile the code
 mvn clean package
 if [ $? -ne 0 ]
@@ -40,7 +41,7 @@ then
 fi
 
 # Build the generated connector jar into a container
-docker build --rm -t kafka-connect-es-sink:latest -f quickstart/Dockerfile .
+docker build --rm -t kafka-connect-elastic-sink:latest -f quickstart/Dockerfile .
 if [ $? -ne 0 ]
 then
   exit 1
@@ -52,23 +53,24 @@ cd $curdir
 project="--project-name qs"
 docker-compose $project down
 docker-compose $project up -d
+
 # Give it a chance to start
-sleep 30
+echo "Waiting for 60 seconds..."
+sleep 60
 
 # Create a topic that we will use for testing
-TOPIC=ESTESTSINK
+TOPIC=ESSINKTEST
 
 echo "Creating Kafka topic"
-# These hostnames are as seen from within the container (ie not 'localhost')
 docker-compose $project exec kafka \
- /opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
+ /opt/kafka/bin/kafka-topics.sh --bootstrap-server kafka:9092 \
                   --create --topic $TOPIC \
                   --partitions 1  --replication-factor 1 >/dev/null 2>&1
 
 # Publish a few lines of text as events
 echo "Publishing to topic"
 docker-compose $project exec -T kafka  \
-  /opt/bitnami/kafka/bin/kafka-console-producer.sh --broker-list kafka:9092 --topic $TOPIC << EOF | sed "s/>//g"
+  /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server kafka:9092 --topic $TOPIC << EOF | sed "s/>//g"
 {"Event": "0"}
 {"Event": "1"}
 {"Event": "2"}
@@ -83,12 +85,12 @@ EOF
 echo
 
 # Wait a while longer to give everything a chance to stabilise
-echo "Waiting..."
-sleep 30
+echo "Waiting for 60 seconds..."
+sleep 60
 
 # And we should now see the output count matching the number of lines in this file.
 # Note: Needs the 'jq' command to be installed for JSON parsing and  'curl'
-c=`curl -k -Ss -H 'Content-Type: application/json' http://localhost:9200/estestsink/_count | jq '.count'`
+c=`curl -k -Ss -H 'Content-Type: application/json' http://localhost:9200/essinktest/_count | jq '.count'`
 echo "Transferred documents = $c"
 if [ "$c" = "10" ]
 then

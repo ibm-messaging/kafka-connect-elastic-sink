@@ -13,28 +13,26 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.ibm.eventstreams.connect.essink;
+package com.ibm.eventstreams.connect.elasticsink;
 
 import org.apache.kafka.connect.connector.Connector;
 import org.apache.kafka.connect.sink.SinkConnector;
 import org.junit.Test;
 
-import com.ibm.eventstreams.connect.essink.ESSinkConnector;
-
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class ESSinkConnectorTest {
+public class ElasticSinkConnectorTest {
     @Test
     public void testVersion() {
-        String version = new ESSinkConnector().version();
+        String version = new ElasticSinkConnector().version();
         String expectedVersion = System.getProperty("connectorVersion");
         assertEquals("Expected connector version to match version of built jar file.", expectedVersion, version);
     }
 
     @Test
     public void testConnectorType() {
-        Connector connector = new ESSinkConnector();
+        Connector connector = new ElasticSinkConnector();
         assertTrue(SinkConnector.class.isAssignableFrom(connector.getClass()));
     }
 }
