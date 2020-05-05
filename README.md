@@ -1,5 +1,5 @@
 # Kafka Connect sink connector for Elasticsearch
-kafka-connect-es-sink is a [Kafka Connect](http://kafka.apache.org/documentation.html#connect)
+kafka-connect-elastic-sink is a [Kafka Connect](http://kafka.apache.org/documentation.html#connect)
 sink connector for copying data from Apache Kafka into Elasticsearch.
 
 The connector is supplied as source code which you can easily build into a JAR file.
@@ -16,7 +16,7 @@ The connector is supplied as source code which you can easily build into a JAR f
 
 
 ## Building the connector
- To build the connector, you must have the following installed:
+To build the connector, you must have the following installed:
 
  - [git](https://git-scm.com/)
  - [Maven 3.0 or later](https://maven.apache.org)
@@ -38,7 +38,7 @@ The connector is supplied as source code which you can easily build into a JAR f
  mvn clean package
  ```
 
-Once built, the output is a single JAR `target/kafka-connect-es-sink-<version>-jar-with-dependencies.jar` which
+Once built, the output is a single JAR `target/kafka-connect-elastic-sink-<version>-jar-with-dependencies.jar` which
 contains all of the required dependencies.
 
 ## Build Testing and Quickstart
@@ -64,31 +64,31 @@ of the connectors such as the Kafka bootstrap servers, and the other provides th
 configuration specific to the Elasticsearch sink connector such as connection
 information to the server. For the former, the Kafka distribution includes a
 file called `connect-standalone.properties` that you can use as a starting point.
-For the latter, you can use `config/es-sink.properties` in this repository.
+For the latter, you can use `config/elastic-sink.properties` in this repository.
 
 To run the connector in standalone mode from the directory into which you
 installed Apache Kafka, you use a command like this:
 
 ``` shell
 $ export REPO=<path to cloned repository>
-$ export CLASSPATH=$CLASSPATH:$REPO/target/kafka-connect-es-sink-<version>-jar-with-dependencies.jar
-$ bin/connect-standalone.sh config/connect-standalone.properties $(REPO)/config/es-sink.properties
+$ export CLASSPATH=$CLASSPATH:$REPO/target/kafka-connect-elastic-sink-<version>-jar-with-dependencies.jar
+$ bin/connect-standalone.sh config/connect-standalone.properties $(REPO)/config/elastic-sink.properties
 ```
 
 ### Running in distributed mode
 You need an instance of Kafka Connect running in distributed mode. The Kafka distribution includes
 a file called `connect-distributed.properties` that you can use as a starting point.
 
-To start the connector, you can use `config/es-sink.json` in this repository
+To start the connector, you can use `config/elastic-sink.json` in this repository
 after replacing all placeholders and use a command like this:
 
 ``` shell
 curl -X POST -H "Content-Type: application/json" http://localhost:8083/connectors \
-  --data "@./config/es-sink.json"
+  --data "@./config/elastic-sink.json"
 ```
 
 ## Configuration
-See this [configuration file](config/es-sink.properties) for all exposed
+See this [configuration file](config/elastic-sink.properties) for all exposed
 configuration attributes. Required attributes for the connector are
 the address of the Elasticsearch server, and the Kafka topics that will
 be collected. You do not include the protocol (http or https) as part
@@ -192,7 +192,7 @@ in Elasticsearch, or whether you want Kafka records with the same key to replace
 documents in Elasticsearch.
 
 ### Unique document ID
-By setting the `es.identifier.builder` configuration to `com.ibm.eventstreams.connect.essink.builders.DefaultIdentifierBuilder`,
+By setting the `es.identifier.builder` configuration to `com.ibm.eventstreams.connect.elasticsink.builders.DefaultIdentifierBuilder`,
 the document ID is a concatenation of the topic name, partition and record offset, for example `topic1!0!42`.
 This means that each Kafka record creates a unique document ID and will result in a separate document in
 Elasticsearch. The records do not need to have keys.
@@ -202,7 +202,7 @@ of them to be indexed in Elasticsearch separately.
 
 
 ### Document ID based on Kafka record key
-By setting the `es.identifier.builder` configuration to `com.ibm.eventstreams.connect.essink.builders.KeyIdentifierBuilder`,
+By setting the `es.identifier.builder` configuration to `com.ibm.eventstreams.connect.elasticsink.builders.KeyIdentifierBuilder`,
 each Kafka record replaces any existing document in Elasticsearch which has the same key. The Kafka record
 key is used as the document ID. This means the document IDs are only as unique as the Kafka record keys.
 The records must have keys.

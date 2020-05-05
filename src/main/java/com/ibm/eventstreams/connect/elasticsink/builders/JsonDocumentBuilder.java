@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.ibm.eventstreams.connect.essink.builders;
+package com.ibm.eventstreams.connect.elasticsink.builders;
 
 import java.util.HashMap;
 

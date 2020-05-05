@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.ibm.eventstreams.connect.essink;
+package com.ibm.eventstreams.connect.elasticsink;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,10 +30,10 @@ import org.apache.kafka.connect.sink.SinkConnector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class ESSinkConnector extends SinkConnector {
-  private static final String classname = ESSinkConnector.class.getName();
+public class ElasticSinkConnector extends SinkConnector {
+  private static final String classname = ElasticSinkConnector.class.getName();
 
-  private static final Logger log = LoggerFactory.getLogger(ESSinkConnector.class);
+  private static final Logger log = LoggerFactory.getLogger(ElasticSinkConnector.class);
 
   public static final String CONFIG_GROUP_ES = "es";
 
@@ -157,7 +157,7 @@ public class ESSinkConnector extends SinkConnector {
    */
   @Override
   public Class<? extends Task> taskClass() {
-    return ESSinkTask.class;
+    return ElasticSinkTask.class;
   }
 
   /**

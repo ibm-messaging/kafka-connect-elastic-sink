@@ -1,23 +1,14 @@
-version: '2.4'
+version: '3'
 
 services:
-
   elastic:
     image: elasticsearch:7.6.0
     environment:
-      - discovery.type=single-node
-      - ELASTICSEARCH_PASSWORD=passw0rd
+    - discovery.type=single-node
+    - ELASTICSEARCH_PASSWORD=passw0rd
     ports:
-      - "9200:9200"
-      - "9300:9300"
-    networks:
-      - kconnect
-    healthcheck:
-      start_period: 15s
-      test: ["CMD", "curl", "-f", "http://elastic:9200"]
-      interval: 10s
-      timeout: 2s
-      retries: 5
+    - "9200:9200"
+    - "9300:9300"
     #Uncomment these and modify host path if you want persistent data
     #volumes:
     #  - '/var/docker/elasticsearch:/usr/share/elasticsearch/data'
@@ -25,58 +16,51 @@ services:
   kibana:
     image: docker.elastic.co/kibana/kibana:7.6.0
     depends_on: 
-      elastic:
-        condition: service_healthy
+    - elastic
     ports:
-      - "5601:5601"
-    networks:
-      - kconnect
+    - "5601:5601"
     environment:
-      - ELASTICSEARCH_HOSTS=http://elastic:9200
-      - ELASTICSEARCH_USERNAME=elastic
+    - ELASTICSEARCH_HOSTS=http://elastic:9200
+    - ELASTICSEARCH_USERNAME=elastic
     #Uncomment these and modify host path if you want persistent data
     #volumes:
     #  - '/var/docker/kibana:/usr/share/kibana/data'
 
   zookeeper:
-    image: bitnami/zookeeper:latest
-    networks:
-      - kconnect
-    environment:
-      - ALLOW_ANONYMOUS_LOGIN=yes
+    image: strimzi/kafka:latest-kafka-2.5.0
+    command: [
+        "sh", "-c",
+        "bin/zookeeper-server-start.sh config/zookeeper.properties"
+      ]
     ports:
-      - "2181:2181"
+    - "2181:2181"
+    environment:
+      LOG_DIR: /tmp/logs
 
   kafka:
-    image: bitnami/kafka:latest
-    networks:
-      - kconnect
+    image: strimzi/kafka:latest-kafka-2.5.0
+    command: [
+      "sh", "-c",
+      "bin/kafka-server-start.sh config/server.properties --override listeners=$${KAFKA_LISTENERS} --override advertised.listeners=$${KAFKA_ADVERTISED_LISTENERS} --override zookeeper.connect=$${KAFKA_ZOOKEEPER_CONNECT}"
+    ]
+    depends_on:
+    - zookeeper
     ports:
-      - "9092:9092"
-    depends_on: 
-      zookeeper:
-        condition: service_started
+    - "9092:9092"
     environment:
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_CFG_DELETE_TOPIC_ENABLE=true
+      LOG_DIR: "/tmp/logs"
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
 
   connector:
-    image: kafka-connect-es-sink:latest
+    image: kafka-connect-elastic-sink:latest
     ports:
-      - "8083:8083"
+    - "8083:8083"
     depends_on: 
-      kafka:
-        condition: service_started
-      elastic:
-        condition: service_healthy
+    - kafka
+    - elastic
     environment:
-      - CONNECT_BOOTSTRAP_SERVERS=kafka:9092
-      - CONNECT_ES_CONNECTION=elastic:9200
-    networks:
-      - kconnect
+    - CONNECT_BOOTSTRAP_SERVERS=kafka:9092
+    - CONNECT_ES_CONNECTION=elastic:9200
     #network_mode: "host"
-
-networks:
-  kconnect:

@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.ibm.eventstreams.connect.essink.builders;
+package com.ibm.eventstreams.connect.elasticsink.builders;
 
 import java.util.Map;
 
@@ -24,21 +24,21 @@ import org.apache.kafka.connect.sink.SinkRecord;
  * Builds messages from Kafka Connect SinkRecords.
  */
 public interface DocumentBuilder {
-    /**
-     * Configure this class.
-     *
-     * @param props initial configuration
-     *
-     * @throws ConnectException   Operation failed and connector should stop.
-     */
-    default void configure(Map<String, String> props) {}
+  /**
+   * Configure this class.
+   *
+   * @param props initial configuration
+   *
+   * @throws ConnectException   Operation failed and connector should stop.
+   */
+  default void configure(Map<String, String> props) {}
 
-    /**
-     * Convert a Kafka Connect SinkRecord into a document.
-     *
-     * @param record             the Kafka Connect SinkRecord
-     *
-     * @return the document content
-     */
-    String fromSinkRecord(SinkRecord record);
+  /**
+   * Convert a Kafka Connect SinkRecord into a document.
+   *
+   * @param record             the Kafka Connect SinkRecord
+   *
+   * @return the document content
+   */
+  String fromSinkRecord(SinkRecord record);
 }

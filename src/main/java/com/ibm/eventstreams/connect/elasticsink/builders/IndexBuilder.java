@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.ibm.eventstreams.connect.essink.builders;
+package com.ibm.eventstreams.connect.elasticsink.builders;
 
 import java.util.Map;
 
@@ -23,21 +23,21 @@ import org.apache.kafka.connect.sink.SinkRecord;
  * Creates the name of the Elasticsearch index from Kafka Connect SinkRecords.
  */
 public interface IndexBuilder {
-    /**
-     * Configure this class.
-     *
-     * @param props initial configuration
-     *
-     * @throws ConnectException   Operation failed and connector should stop.
-     */
-    default void configure(Map<String, String> props) {}
+  /**
+   * Configure this class.
+   *
+   * @param props initial configuration
+   *
+   * @throws ConnectException   Operation failed and connector should stop.
+   */
+  default void configure(Map<String, String> props) {}
 
-    /**
-     * Generate the index name from a Kafka Connect SinkRecord.
-     *
-     * @param record             the Kafka Connect SinkRecord
-     *
-     * @return the index
-     */
-    String generateIndex(SinkRecord record);
+  /**
+   * Generate the index name from a Kafka Connect SinkRecord.
+   *
+   * @param record             the Kafka Connect SinkRecord
+   *
+   * @return the index
+   */
+  String generateIndex(SinkRecord record);
 }

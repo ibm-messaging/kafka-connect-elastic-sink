@@ -13,7 +13,7 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package com.ibm.eventstreams.connect.essink.builders;
+package com.ibm.eventstreams.connect.elasticsink.builders;
 
 import java.util.Map;
 
@@ -25,9 +25,9 @@ import org.slf4j.LoggerFactory;
 /**
  * Creates the name of the index into which the event is inserted
  */
-public class BaseIndexBuilder implements IndexBuilder {
-  private static final String classname = BaseIndexBuilder.class.getName();
-  private static final Logger log = LoggerFactory.getLogger(BaseIndexBuilder.class);
+public class DefaultIndexBuilder implements IndexBuilder {
+  private static final String classname = DefaultIndexBuilder.class.getName();
+  private static final Logger log = LoggerFactory.getLogger(DefaultIndexBuilder.class);
 
   /**
    * Configure this class.
@@ -37,31 +37,46 @@ public class BaseIndexBuilder implements IndexBuilder {
    * @throws ConnectException   Operation failed and connector should stop.
    */
   @Override
-  public void configure(Map<String, String> props) {
+  public void configure(final Map<String, String> props) {
     log.trace("[{}] Entry {}.configure, props={}", Thread.currentThread().getId(), classname, props);
 
     log.trace("[{}]  Exit {}.configure", Thread.currentThread().getId(), classname);
   }
 
   /**
-   * Convert a Kafka Connect SinkRecord into a message.
-   * This implementation is very simple. It just converts
-   * the topic associated with the record into lowercase.
+   * Convert a Kafka Connect SinkRecord into a message. This implementation is
+   * very simple. It just converts the topic associated with the record into
+   * lowercase.
    * 
-   * The transform ensures that there are no '/' characters
-   * in the topic, which are not valid in Kafka anyway, but
-   * this makes it doubly certain.
-   *
-   * @param record             the Kafka Connect SinkRecord
+   * <p>The index name must be:
+   * <ul>
+   * <li> lowercase
+   * <li> no /,\,*,?,",<,>,|,#,:, or comma
+   * <li> cannot start with -,_,+
+   * <li> cannot be . or ..
+   * <li> maximum length of 255 bytes
+   * </ul>
+   * 
+   * The Kafka topic name can be:
+   * <ul>
+   * <li> a-z,A-Z,0-9,.,_.-
+   * <li> maximum length of 249 characters
+   * </ul>
+   * 
+   * @param record the Kafka Connect SinkRecord
    *
    * @return the message
    */
   @Override
-  public String generateIndex(SinkRecord record) {
+  public String generateIndex(final SinkRecord record) {
     
     log.trace("[{}] Entry {}.generateIndex", Thread.currentThread().getId(), classname);
 
-    String index = record.topic().replaceAll("/","!").toLowerCase();
+    final String index = record.topic().toLowerCase();
+
+    if (index.equals(".") || index.equals("..") || index.startsWith("-") || index.startsWith("_")) {
+      throw new ConnectException("Invalid index name " + index + " for topic name " + record.topic());
+    }
 
     log.trace("[{}] Exit {}.generateIndex", Thread.currentThread().getId(), classname);
 
