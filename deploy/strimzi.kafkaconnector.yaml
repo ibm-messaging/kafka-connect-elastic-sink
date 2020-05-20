@@ -1,0 +1,18 @@
+apiVersion: kafka.strimzi.io/v1alpha1
+kind: KafkaConnector
+metadata:
+  name: elastic-sink
+  labels:
+    strimzi.io/cluster: <KafkaConnect_CLUSTER_NAME>
+spec:
+  class: com.ibm.eventstreams.connect.elasticsink.ElasticSinkConnector
+  tasksMax: 1
+  config:
+    topics: <TOPIC>
+    es.connection: <ELASTICSEARCH_ENDPOINT>
+    es.document.builder: com.ibm.eventstreams.connect.elasticsink.builders.JsonDocumentBuilder
+    es.index.builder: com.ibm.eventstreams.connect.elasticsink.builders.DefaultIndexBuilder
+    es.identifier.builder: com.ibm.eventstreams.connect.elasticsink.builders.DefaultIdentifierBuilder
+    key.converter: org.apache.kafka.connect.storage.StringConverter
+    value.converter: org.apache.kafka.connect.json.JsonConverter
+    value.converter.schemas.enable: false
