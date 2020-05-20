@@ -87,6 +87,32 @@ curl -X POST -H "Content-Type: application/json" http://localhost:8083/connector
   --data "@./config/elastic-sink.json"
 ```
 
+### Deploying to OpenShift using Strimzi
+
+This repository includes a Kubernetes yaml file called `strimzi.kafkaconnector.yaml` for use with the [Strimzi](https://strimzi.io) operator. Strimzi provides a simplified way of running the Kafka Connect distributed worker, by defining either a KafkaConnect resource or a KafkaConnectS2I resource.
+
+The KafkaConnectS2I resource provides a nice way to have OpenShift do all the work of building the Docker images for you. This works particularly nicely combined with the KafkaConnector resource that represents an individual connector.
+
+The following instructions assume you are running on OpenShift and have Strimzi 0.16 or later installed.
+
+#### Start a Kafka Connect cluster using KafkaConnectS2I
+1. Create a file called `kafka-connect-s2i.yaml` containing the definition of a KafkaConnectS2I resource. You can use the examples in the Strimzi project to get started.
+1. Configure it with the information it needs to connect to your Kafka cluster. You must include the annotation `strimzi.io/use-connector-resources: "true"` to configure it to use KafkaConnector resources so you can avoid needing to call the Kafka Connect REST API directly.
+1. `oc apply -f kafka-connect-s2i.yaml` to create the cluster, which usually takes several minutes.
+
+#### Add the Elasticsearch sink connector to the cluster
+1. `mvn clean package` to build the connector JAR.
+1. `mkdir my-plugins`
+1. `cp target/kafka-connect-elastic-sink-*-jar-with-dependencies.jar my-plugins`
+1. `oc start-build <kafkaconnectClusterName>-connect --from-dir ./my-plugins` to add the Elasticsearch sink connector to the Kafka Connect distributed worker cluster. Wait for the build to complete, which usually takes a few minutes.
+1. `oc describe kafkaconnects2i <kafkaConnectClusterName>` to check that the Elasticsearch sink connector is in the list of available connector plugins.
+
+#### Start an instance of the Elasticsearch sink connector using KafkaConnector
+1. `cp deploy/strimzi.kafkaconnector.yaml kafkaconnector.yaml`
+1. Update the `kafkaconnector.yaml` file to replace all of the values in `<>`, adding any additional configuration properties.
+1. `oc apply -f kafkaconnector.yaml` to start the connector.
+1. `oc get kafkaconnector` to list the connectors. You can use `oc describe` to get more details on the connector, such as its status.
+
 ## Configuration
 See this [configuration file](config/elastic-sink.properties) for all exposed
 configuration attributes. Required attributes for the connector are
