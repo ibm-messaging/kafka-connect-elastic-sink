@@ -21,9 +21,9 @@ To run the environment, you need these commands on your local system:
 * [jq](https://stedolan.github.io/jq/)
 
 ### Running the environment
-The `RUNME.sh` script creates and runs containers with a Kafka server, an
+The `RUNME.sh` script creates and runs containers with a Kafka broker, an
 Elasticsearch server and Kibana. It compiles the connector and then runs it in
-a container. The script then publishes some messages to Kafka which should be
+a container. The script then publishes some messages to Kafka which are
 copied into Elasticsearch by the connector.
 
 Note that the script has some delays coded to give time for the environment
@@ -42,4 +42,4 @@ When you want to stop the containers, run `docker-compose --project-name qs down
 ## Running your own investigations
 You can use the `docker-compose.yml` file to create your own environment outside
 of the `RUNME.sh` script. Take a look at the script to see how commands
-are issued to the Kafka server such as creating topics and publishing events.
+are issued to the Kafka broker such as creating topics and publishing events.

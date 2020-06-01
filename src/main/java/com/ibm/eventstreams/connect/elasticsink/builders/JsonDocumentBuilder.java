@@ -25,44 +25,44 @@ import org.slf4j.LoggerFactory;
 import static java.nio.charset.StandardCharsets.*;
 
 /**
- * Builds JSON messages from Kafka Connect SinkRecords.
+ * Builds JSON documents from Kafka Connect SinkRecords
  */
 public class JsonDocumentBuilder implements DocumentBuilder {
-  private static final String classname = JsonDocumentBuilder.class.getName();
-  private static final Logger log = LoggerFactory.getLogger(JsonDocumentBuilder.class);
+    private static final String classname = JsonDocumentBuilder.class.getName();
+    private static final Logger log = LoggerFactory.getLogger(JsonDocumentBuilder.class);
 
-  private JsonConverter converter;
+    private JsonConverter converter;
 
-  public JsonDocumentBuilder() {
-    log.info("Building documents using {}", classname);
-    converter = new JsonConverter();
-    
-    // We just want the payload, not the schema in the output message
-    HashMap<String, String> m = new HashMap<>();
-    m.put("schemas.enable", "false");
+    public JsonDocumentBuilder() {
+        log.info("Building documents using {}", classname);
+        converter = new JsonConverter();
+        
+        // We just want the payload, not the schema in the output message
+        HashMap<String, String> m = new HashMap<>();
+        m.put("schemas.enable", "false");
 
-    // Convert the value, not the key (isKey == false)
-    converter.configure(m, false);
-  }
-
-  /**
-   * Convert a Kafka Connect SinkRecord into a message.
-   *
-   * @param record             the Kafka Connect SinkRecord
-   *
-   * @return the message
-   */
-  @Override
-  public String fromSinkRecord(SinkRecord record) {
-    log.trace("[{}] Entry {}.fromSinkRecord", Thread.currentThread().getId(), classname);
-
-    byte[] payload = converter.fromConnectData(record.topic(), record.valueSchema(), record.value());
-    String document = null;
-    if (payload != null) {
-        document = new String(payload, UTF_8);
+        // Convert the value, not the key (isKey == false)
+        converter.configure(m, false);
     }
 
-    log.trace("[{}] Exit {}.fromSinkRecord", Thread.currentThread().getId(), classname);
-    return document;
-  }
+    /**
+     * Convert a Kafka Connect SinkRecord into a message.
+     *
+     * @param record             the Kafka Connect SinkRecord
+     *
+     * @return the message
+     */
+    @Override
+    public String fromSinkRecord(SinkRecord record) {
+        log.trace("[{}] Entry {}.fromSinkRecord", Thread.currentThread().getId(), classname);
+
+        byte[] payload = converter.fromConnectData(record.topic(), record.valueSchema(), record.value());
+        String document = null;
+        if (payload != null) {
+            document = new String(payload, UTF_8);
+        }
+
+        log.trace("[{}] Exit {}.fromSinkRecord", Thread.currentThread().getId(), classname);
+        return document;
+    }
 }
