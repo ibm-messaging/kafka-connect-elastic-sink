@@ -20,24 +20,24 @@ import java.util.Map;
 import org.apache.kafka.connect.sink.SinkRecord;
 
 /**
- * Creates the name of the Elasticsearch index from Kafka Connect SinkRecords.
+ * Creates the name of the Elasticsearch index from Kafka Connect SinkRecords
  */
 public interface IndexBuilder {
-  /**
-   * Configure this class.
-   *
-   * @param props initial configuration
-   *
-   * @throws ConnectException   Operation failed and connector should stop.
-   */
-  default void configure(Map<String, String> props) {}
+    /**
+     * Configure this class.
+     *
+     * @param props initial configuration
+     *
+     * @throws ConnectException   Operation failed and connector should stop.
+     */
+    default void configure(Map<String, String> props) {}
 
-  /**
-   * Generate the index name from a Kafka Connect SinkRecord.
-   *
-   * @param record             the Kafka Connect SinkRecord
-   *
-   * @return the index
-   */
-  String generateIndex(SinkRecord record);
+    /**
+     * Generate the index name from a Kafka Connect SinkRecord.
+     *
+     * @param record             the Kafka Connect SinkRecord
+     *
+     * @return the index
+     */
+    String generateIndex(SinkRecord record);
 }

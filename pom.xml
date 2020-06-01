@@ -20,7 +20,7 @@
   <groupId>com.ibm.eventstreams.connect</groupId>
   <artifactId>kafka-connect-elastic-sink</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.3-SNAPSHOT</version>
+  <version>0.0.4-SNAPSHOT</version>
   <name>kafka-connect-elastic-sink</name>
   <organization>
     <name>IBM Corporation</name>
@@ -28,7 +28,7 @@
   </organization>
   <url>http://ibm.com</url>
   <description>
-      A Kafka Connect connector for copying data from Apache Kafka into Elasticsearch
+      A Kafka Connect connector for copying data from Apache Kafka into Elasticsearch.
   </description>
   <licenses>
     <license>
@@ -54,7 +54,6 @@
       <version>2.5.0</version>
       <scope>provided</scope>
     </dependency>
-
 
     <dependency>
       <groupId>junit</groupId>
