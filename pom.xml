@@ -20,7 +20,7 @@
   <groupId>com.ibm.eventstreams.connect</groupId>
   <artifactId>kafka-connect-elastic-sink</artifactId>
   <packaging>jar</packaging>
-  <version>0.0.4-SNAPSHOT</version>
+  <version>1.0.0</version>
   <name>kafka-connect-elastic-sink</name>
   <organization>
     <name>IBM Corporation</name>
