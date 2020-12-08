@@ -1,4 +1,4 @@
-FROM strimzi/kafka:latest-kafka-2.5.0 as kafka
+FROM strimzi/kafka:latest-kafka-2.6.0 as kafka
 
 FROM ibmjava:8-jre
 
