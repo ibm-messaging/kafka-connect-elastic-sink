@@ -70,7 +70,7 @@
     <dependency>
     	<groupId>org.eclipse.jetty</groupId>
     	<artifactId>jetty-client</artifactId>
-    	<version>9.4.26.v20200117</version>
+    	<version>9.4.51.v20230217</version>
     </dependency>
     <dependency>
     	<groupId>org.json</groupId>
