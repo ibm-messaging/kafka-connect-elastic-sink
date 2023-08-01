@@ -1,4 +1,5 @@
 # Kafka Connect sink connector for Elasticsearch
+
 kafka-connect-elastic-sink is a [Kafka Connect](http://kafka.apache.org/documentation.html#connect) sink connector for copying data from Apache Kafka into Elasticsearch.
 
 The connector is supplied as source code which you can easily build into a JAR file.
@@ -15,6 +16,7 @@ The connector is supplied as source code which you can easily build into a JAR f
 
 
 ## Building the connector
+
 To build the connector, you must have the following installed:
 
  - [git](https://git-scm.com/)
@@ -40,11 +42,13 @@ To build the connector, you must have the following installed:
 Once built, the output is a single JAR `target/kafka-connect-elastic-sink-<version>-jar-with-dependencies.jar` which contains all of the required dependencies.
 
 ## Build Testing and Quickstart
+
 The `quickstart` directory in the repository contains files to run a complete environment as Docker containers. This allows validation of the packages and demonstrates basic usage of the connector.
 
 For more information see the [README](quickstart/README-QS.md) in that directory.
 
 ## Running the connector
+
 To run the connector, you must have:
 * The JAR from building the connector
 * A properties file containing the configuration for the connector
@@ -54,6 +58,7 @@ To run the connector, you must have:
 The connector can be run in a Kafka Connect worker in either standalone (single process) or distributed mode. It's a good idea to start in standalone mode.
 
 ### Running in standalone mode
+
 You need two configuration files. One is for the configuration that applies to all of the connectors such as the Kafka bootstrap servers, and the other provides the configuration specific to the Elasticsearch sink connector such as connection information to the server. For the former, the Kafka distribution includes a file called `connect-standalone.properties` that you can use as a starting point. For the latter, you can use `config/elastic-sink.properties` in this repository.
 
 To run the connector in standalone mode from the directory into which you installed Apache Kafka, you use a command like this:
@@ -65,6 +70,7 @@ $ bin/connect-standalone.sh config/connect-standalone.properties $(REPO)/config/
 ```
 
 ### Running in distributed mode
+
 You need an instance of Kafka Connect running in distributed mode. The Kafka distribution includes a file called `connect-distributed.properties` that you can use as a starting point.
 
 To start the connector, you can use `config/elastic-sink.json` in this repository
@@ -84,11 +90,13 @@ The KafkaConnectS2I resource provides a nice way to have OpenShift do all the wo
 The following instructions assume you are running on OpenShift and have Strimzi 0.16 or later installed.
 
 #### Start a Kafka Connect cluster using KafkaConnectS2I
+
 1. Create a file called `kafka-connect-s2i.yaml` containing the definition of a KafkaConnectS2I resource. You can use the examples in the Strimzi project to get started.
 1. Configure it with the information it needs to connect to your Kafka cluster. You must include the annotation `strimzi.io/use-connector-resources: "true"` to configure it to use KafkaConnector resources so you can avoid needing to call the Kafka Connect REST API directly.
 1. `oc apply -f kafka-connect-s2i.yaml` to create the cluster, which usually takes several minutes.
 
 #### Add the Elasticsearch sink connector to the cluster
+
 1. `mvn clean package` to build the connector JAR.
 1. `mkdir my-plugins`
 1. `cp target/kafka-connect-elastic-sink-*-jar-with-dependencies.jar my-plugins`
@@ -146,15 +154,18 @@ In order to ensure reliable indexing of documents, the following configurations 
 | value.converter              | `org.apache.kafka.connect.json.JsonConverter`                                                     |
 
 ### Performance tuning
+
 Multiple instances of the connector can be run in parallel by setting the `tasks.max` configuration property. This should usually be set to match the number of partitions defined for the Kafka topic.
 
 ### Security
+
 The connector supports anonymous and basic authentication to the Elasticsearch server. With basic authentication, you need to provide a userid and password
 as part of the configuration.
 
 For TLS-protected communication to Elasticsearch, you must provide appropriate certificate configuration. At minimum, a truststore is needed. Your Elasticsearch server configuration will determine whether individual certificates (a keystore populated with your personal certificate) are also needed.
 
 ### Externalizing passwords with FileConfigProvider
+
 Given a file `es-secrets.properties` with the contents:
 
 ```
@@ -184,26 +195,35 @@ To ensure the documents can be indexed reliably, the incoming Kafka records must
 The name of the Elasticsearch index is same as the Kafka topic name, converted into lower case with special characters replaced.
 
 ## Modes of operation
+
 There are two modes of operation based on whether you want each Kafka record to create a new document in Elasticsearch, or whether you want Kafka records with the same key to replace earlier versions of documents in Elasticsearch.
 
 ### Unique document ID
+
 By setting the `es.identifier.builder` configuration to `com.ibm.eventstreams.connect.elasticsink.builders.DefaultIdentifierBuilder`, the document ID is a concatenation of the topic name, partition and record offset, for example `topic1!0!42`. This means that each Kafka record creates a unique document ID and will result in a separate document in Elasticsearch. The records do not need to have keys.
 
 This mode of operation is suitable if the Kafka records are independent events and you want each of them to be indexed in Elasticsearch separately.
 
 
 ### Document ID based on Kafka record key
+
 By setting the `es.identifier.builder` configuration to `com.ibm.eventstreams.connect.elasticsink.builders.KeyIdentifierBuilder`, each Kafka record replaces any existing document in Elasticsearch which has the same key. The Kafka record key is used as the document ID. This means the document IDs are only as unique as the Kafka record keys. The records must have keys.
 
 This mode of operation is suitable if the Kafka records represent data items identified by the record key, and where a sequence of records with the same key represent updates to a particular data item. In this case, you want the most recent version of the data item to be indexed. A record with an empty value is treated as deletion of the data item and results in deletion of a document with that key from the index.
 
 This mode of operation is suitable if you are using the change data capture technique.
 
+## Support
+
+Commercial support for this connector is available for customers with a support entitlement for [IBM Event Automation](https://www.ibm.com/products/event-automation) or [IBM Cloud Pak for Integration](https://www.ibm.com/cloud/cloud-pak-for-integration).
+
 ## Issues and contributions
+
 For issues relating specifically to this connector, please use the [GitHub issue tracker](https://github.com/ibm-messaging/kafka-connect-elastic-sink/issues). If you do want to submit a Pull Request related to this connector, please read the [contributing guide](CONTRIBUTING.md) first to understand how to sign your commits.
 
 ## License
-Copyright 2020 IBM Corporation
+
+Copyright 2020, 2023 IBM Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
