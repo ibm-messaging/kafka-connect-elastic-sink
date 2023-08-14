@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
- * Copyright 2020 IBM Corporation
+ * Copyright 2020, 2023 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,9 @@
  *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
- -->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.ibm.eventstreams.connect</groupId>
@@ -68,14 +69,14 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-    	<groupId>org.eclipse.jetty</groupId>
-    	<artifactId>jetty-client</artifactId>
-    	<version>9.4.51.v20230217</version>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-client</artifactId>
+      <version>9.4.51.v20230217</version>
     </dependency>
     <dependency>
-    	<groupId>org.json</groupId>
-    	<artifactId>json</artifactId>
-    	<version>20230227</version>
+      <groupId>org.json</groupId>
+      <artifactId>json</artifactId>
+      <version>20230227</version>
     </dependency>
   </dependencies>
 
@@ -114,6 +115,31 @@
             <descriptor>src/assembly/package.xml</descriptor>
           </descriptors>
         </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-checkstyle-plugin</artifactId>
+        <version>3.2.0</version>
+        <configuration>
+          <encoding>UTF-8</encoding>
+          <consoleOutput>true</consoleOutput>
+          <failsOnError>true</failsOnError>
+          <violationSeverity>warning</violationSeverity>
+          <failOnViolation>true</failOnViolation>
+          <linkXRef>false</linkXRef>
+          <sourceDirectories>${project.build.sourceDirectory}</sourceDirectories>
+          <configLocation>${project.basedir}/.checkstyle/checkstyle.xml</configLocation>
+          <propertyExpansion>checkstyle.config.path=${project.basedir}</propertyExpansion>
+        </configuration>
+        <executions>
+          <execution>
+            <id>validate</id>
+            <phase>validate</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>

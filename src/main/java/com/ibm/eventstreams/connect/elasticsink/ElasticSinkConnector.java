@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corporation
+ * Copyright 2020, 2023 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package com.ibm.eventstreams.connect.elasticsink;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -31,7 +32,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class ElasticSinkConnector extends SinkConnector {
-    private static final String classname = ElasticSinkConnector.class.getName();
+    private static final String CLASSNAME = ElasticSinkConnector.class.getName();
 
     private static final Logger log = LoggerFactory.getLogger(ElasticSinkConnector.class);
 
@@ -134,22 +135,21 @@ public class ElasticSinkConnector extends SinkConnector {
      * @param props configuration settings
      */
     @Override
-    public void start(Map<String, String> props) {
-        log.trace("[{}] Entry {}.start, props={}", Thread.currentThread().getId(), classname, props);
+    public void start(final Map<String, String> props) {
+        log.trace("[{}] Entry {}.start, props={}", Thread.currentThread().getId(), CLASSNAME, props);
 
         configProps = props;
         for (final Entry<String, String> entry : props.entrySet()) {
-            String value;
-            if (entry.getKey().toLowerCase().contains("password")) {
+            final String value;
+            if (entry.getKey().toLowerCase(Locale.ENGLISH).contains("password")) {
                 value = "[hidden]";
-            }
-            else {
+            } else {
                 value = entry.getValue();
             }
             log.debug("Connector props entry {} : {}", entry.getKey(), value);
         }
 
-        log.trace("[{}]  Exit {}.start", Thread.currentThread().getId(), classname);
+        log.trace("[{}]  Exit {}.start", Thread.currentThread().getId(), CLASSNAME);
     }
 
     /**
@@ -168,15 +168,15 @@ public class ElasticSinkConnector extends SinkConnector {
      * @return configurations for Tasks
      */
     @Override
-    public List<Map<String, String>> taskConfigs(int maxTasks) {
-        log.trace("[{}] Entry {}.taskConfigs, maxTasks={}", Thread.currentThread().getId(), classname, maxTasks);
+    public List<Map<String, String>> taskConfigs(final int maxTasks) {
+        log.trace("[{}] Entry {}.taskConfigs, maxTasks={}", Thread.currentThread().getId(), CLASSNAME, maxTasks);
 
-        List<Map<String, String>> taskConfigs = new ArrayList<>();
+        final List<Map<String, String>> taskConfigs = new ArrayList<>();
         for (int i = 0; i < maxTasks; i++) {
             taskConfigs.add(configProps);
         }
 
-        log.trace("[{}]  Exit {}.taskConfigs, retval={}", Thread.currentThread().getId(), classname, taskConfigs);
+        log.trace("[{}]  Exit {}.taskConfigs, retval={}", Thread.currentThread().getId(), CLASSNAME, taskConfigs);
         return taskConfigs;
     }
 
@@ -185,17 +185,18 @@ public class ElasticSinkConnector extends SinkConnector {
      */
     @Override
     public void stop() {
-        log.trace("[{}] Entry {}.stop", Thread.currentThread().getId(), classname);
-        log.trace("[{}]  Exit {}.stop", Thread.currentThread().getId(), classname);
+        log.trace("[{}] Entry {}.stop", Thread.currentThread().getId(), CLASSNAME);
+        log.trace("[{}]  Exit {}.stop", Thread.currentThread().getId(), CLASSNAME);
     }
 
     /**
      * Define the configuration for the connector.
+     *
      * @return The ConfigDef for this connector.
      */
     @Override
     public ConfigDef config() {
-        ConfigDef config = new ConfigDef();
+        final ConfigDef config = new ConfigDef();
 
         // Connection information
         config.define(CONFIG_NAME_ES_CONNECTION, Type.STRING, ConfigDef.NO_DEFAULT_VALUE, Importance.HIGH,

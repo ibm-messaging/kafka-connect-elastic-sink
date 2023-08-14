@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corporation
+ * Copyright 2020, 2023 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ public class KeyIdentifierBuilder implements IdentifierBuilder {
      * @return the document identifier
      */
     @Override
-    public String fromSinkRecord(SinkRecord record) {
+    public String fromSinkRecord(final SinkRecord record) {
         if (record.key() == null) {
             throw new ConnectException("Key must be present to use as document ID.");
         }
