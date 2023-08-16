@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corporation
+ * Copyright 2020, 2023 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import com.ibm.eventstreams.connect.elasticsink.builders.IndexBuilder;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.GeneralSecurityException;
+import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -41,11 +42,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Writes messages to Elasticsearch using a REST call. Messages are added to the current
+ * Writes messages to Elasticsearch using a REST call. Messages are added to the
+ * current
  * operation until told to commit. Automatically reconnects as needed.
  */
 public class ElasticWriter {
-    private static final String classname = ElasticWriter.class.getName();
+    private static final String CLASSNAME = ElasticWriter.class.getName();
 
     private static final Logger log = LoggerFactory.getLogger(ElasticWriter.class);
 
@@ -53,9 +55,11 @@ public class ElasticWriter {
     private IndexBuilder indexBuilder;
     private IdentifierBuilder identifierBuilder;
 
-    private boolean connected = false;                              // Whether connected to ES
+    private boolean connected = false; // Whether connected to ES
 
-    private static final long reconnectDelayMs[] = {0, 100, 500, 1000, 2000, 4000, 8000, 30000, 60000}; // Retry intervals for connection to server - up to 1 minute which then continues forever. 
+    // Retry intervals for connection to server - up to 1 minute which then
+    // continues forever.
+    private static final long[] RECONNECT_DELAY_MS = {0, 100, 500, 1000, 2000, 4000, 8000, 30000, 60000};
     private int reconnectDelayIndex = 0;
     private boolean errorMaxDelay = false;
 
@@ -78,7 +82,9 @@ public class ElasticWriter {
     private int jettyConnectionTimeoutSec = ElasticSinkConnector.DEFAULT_JETTY_CONNECTION_TIMEOUT_SEC;
     private int jettyOperationTimeoutSec = ElasticSinkConnector.DEFAULT_JETTY_OPERATION_TIMEOUT_SEC;
 
-    private int maxCommitFailures = ElasticSinkConnector.DEFAULT_MAX_COMMIT_FAILURES; // How many commit failures allowed before treating it as fatal
+    private int maxCommitFailures = ElasticSinkConnector.DEFAULT_MAX_COMMIT_FAILURES; // How many commit failures
+                                                                                      // allowed before treating it as
+                                                                                      // fatal
 
     private String destination;
     private StringBuffer bulkMsg = new StringBuffer();
@@ -92,10 +98,10 @@ public class ElasticWriter {
      *
      * @param props initial configuration
      *
-     * @throws ConnectException   Operation failed and connector should stop.
+     * @throws ConnectException Operation failed and connector should stop.
      */
-    public void configure(Map<String, String> props) throws ConnectException {
-        log.trace("[{}] Entry {}.configure, props={}", Thread.currentThread().getId(),classname, props);
+    public void configure(final Map<String, String> props) throws ConnectException {
+        log.trace("[{}] Entry {}.configure, props={}", Thread.currentThread().getId(), CLASSNAME, props);
 
         // Basic connection for the server
         connection = props.get(ElasticSinkConnector.CONFIG_NAME_ES_CONNECTION);
@@ -110,68 +116,76 @@ public class ElasticWriter {
 
         // Jetty configuration for HTTP client behaviour
         proxyHost = props.get(ElasticSinkConnector.CONFIG_NAME_ES_HTTP_PROXY_HOST);
-        proxyPort = getPropInt(props,ElasticSinkConnector.CONFIG_NAME_ES_HTTP_PROXY_PORT,ElasticSinkConnector.DEFAULT_HTTP_PROXY_PORT);
+        proxyPort = getPropInt(props, ElasticSinkConnector.CONFIG_NAME_ES_HTTP_PROXY_PORT,
+                ElasticSinkConnector.DEFAULT_HTTP_PROXY_PORT);
 
-        jettyMaxConnections = getPropInt(props,ElasticSinkConnector.CONFIG_NAME_ES_JETTY_CONNECTIONS,ElasticSinkConnector.DEFAULT_JETTY_MAX_CONNECTIONS);
-        jettyConnectionTimeoutSec = getPropInt(props,ElasticSinkConnector.CONFIG_NAME_ES_JETTY_CONNECTION_TIMEOUT_SEC,ElasticSinkConnector.DEFAULT_JETTY_CONNECTION_TIMEOUT_SEC);
-        jettyIdleTimeoutSec = getPropInt(props,ElasticSinkConnector.CONFIG_NAME_ES_JETTY_IDLE_TIMEOUT_SEC,ElasticSinkConnector.DEFAULT_JETTY_IDLE_TIMEOUT_SEC);
-        jettyOperationTimeoutSec = getPropInt(props,ElasticSinkConnector.CONFIG_NAME_ES_JETTY_OPERATION_TIMEOUT_SEC,ElasticSinkConnector.DEFAULT_JETTY_OPERATION_TIMEOUT_SEC);
+        jettyMaxConnections = getPropInt(props, ElasticSinkConnector.CONFIG_NAME_ES_JETTY_CONNECTIONS,
+                ElasticSinkConnector.DEFAULT_JETTY_MAX_CONNECTIONS);
+        jettyConnectionTimeoutSec = getPropInt(props, ElasticSinkConnector.CONFIG_NAME_ES_JETTY_CONNECTION_TIMEOUT_SEC,
+                ElasticSinkConnector.DEFAULT_JETTY_CONNECTION_TIMEOUT_SEC);
+        jettyIdleTimeoutSec = getPropInt(props, ElasticSinkConnector.CONFIG_NAME_ES_JETTY_IDLE_TIMEOUT_SEC,
+                ElasticSinkConnector.DEFAULT_JETTY_IDLE_TIMEOUT_SEC);
+        jettyOperationTimeoutSec = getPropInt(props, ElasticSinkConnector.CONFIG_NAME_ES_JETTY_OPERATION_TIMEOUT_SEC,
+                ElasticSinkConnector.DEFAULT_JETTY_OPERATION_TIMEOUT_SEC);
 
         // Other connector configuration
-        maxCommitFailures = getPropInt(props,ElasticSinkConnector.CONFIG_NAME_ES_MAX_COMMIT_FAILURES,ElasticSinkConnector.DEFAULT_MAX_COMMIT_FAILURES);
-        String documentBuilderClass = props.get(ElasticSinkConnector.CONFIG_NAME_ES_DOCUMENT_BUILDER);
-        String indexBuilderClass = props.get(ElasticSinkConnector.CONFIG_NAME_ES_INDEX_BUILDER);
-        String identifierBuilderClass = props.get(ElasticSinkConnector.CONFIG_NAME_ES_IDENTIFIER_BUILDER);
+        maxCommitFailures = getPropInt(props, ElasticSinkConnector.CONFIG_NAME_ES_MAX_COMMIT_FAILURES,
+                ElasticSinkConnector.DEFAULT_MAX_COMMIT_FAILURES);
+        final String documentBuilderClass = props.get(ElasticSinkConnector.CONFIG_NAME_ES_DOCUMENT_BUILDER);
+        final String indexBuilderClass = props.get(ElasticSinkConnector.CONFIG_NAME_ES_INDEX_BUILDER);
+        final String identifierBuilderClass = props.get(ElasticSinkConnector.CONFIG_NAME_ES_IDENTIFIER_BUILDER);
 
         try {
-            Class<? extends DocumentBuilder> c = Class.forName(documentBuilderClass).asSubclass(DocumentBuilder.class);
+            final Class<? extends DocumentBuilder> c = Class.forName(documentBuilderClass)
+                    .asSubclass(DocumentBuilder.class);
             documentBuilder = c.newInstance();
             documentBuilder.configure(props);
             log.debug("Instantiated document builder {}", documentBuilderClass);
-        }
-        catch (ClassNotFoundException | ClassCastException | IllegalAccessException | InstantiationException | NullPointerException e) {
+        } catch (ClassNotFoundException | ClassCastException | IllegalAccessException | InstantiationException
+                | NullPointerException e) {
             log.error("Could not instantiate document builder {}", documentBuilderClass);
             throw new ConnectException("Could not instantiate document builder", e);
         }
 
         try {
-            Class<? extends IndexBuilder> c = Class.forName(indexBuilderClass).asSubclass(IndexBuilder.class);
+            final Class<? extends IndexBuilder> c = Class.forName(indexBuilderClass).asSubclass(IndexBuilder.class);
             indexBuilder = c.newInstance();
             indexBuilder.configure(props);
             log.debug("Instantiated index builder {}", indexBuilderClass);
-        }
-        catch (ClassNotFoundException | ClassCastException | IllegalAccessException | InstantiationException | NullPointerException e) {
-            log.error("Could not instantiate index builder '{}' {}", indexBuilderClass,e);
+        } catch (ClassNotFoundException | ClassCastException | IllegalAccessException | InstantiationException
+                | NullPointerException e) {
+            log.error("Could not instantiate index builder '{}' {}", indexBuilderClass, e);
             throw new ConnectException("Could not instantiate index builder", e);
         }
 
         try {
-            Class<? extends IdentifierBuilder> c = Class.forName(identifierBuilderClass).asSubclass(IdentifierBuilder.class);
+            final Class<? extends IdentifierBuilder> c = Class.forName(identifierBuilderClass)
+                    .asSubclass(IdentifierBuilder.class);
             identifierBuilder = c.newInstance();
             identifierBuilder.configure(props);
             log.debug("Instantiated document identifier builder {}", identifierBuilderClass);
-        }
-        catch (ClassNotFoundException | ClassCastException | IllegalAccessException | InstantiationException | NullPointerException e) {
-            log.error("Could not instantiate document identifier builder '{}' {}", identifierBuilderClass,e);
+        } catch (ClassNotFoundException | ClassCastException | IllegalAccessException | InstantiationException
+                | NullPointerException e) {
+            log.error("Could not instantiate document identifier builder '{}' {}", identifierBuilderClass, e);
             throw new ConnectException("Could not instantiate document identifier builder", e);
         }
     }
 
     /**
      * getPropInt: If the configuration parameter is expected to be an integer, do
-     * the conversion and return the value. Throw an exception if there is a bad format. If
-     * the user has not provided a specific parameter, return the default value.
+     * the conversion and return the value. Throw an exception if there is a bad
+     * format. If the user has not provided a specific parameter, return the default
+     * value.
      */
-    private int getPropInt(Map<String, String> props, String key, int defaultValue) {
+    private int getPropInt(final Map<String, String> props, final String key, final int defaultValue) {
         int rc = 0;
-        String s = props.get(key);
+        final String s = props.get(key);
         if (s == null) {
             return defaultValue;
         }
         try {
             rc = Integer.valueOf(s);
-        }
-        catch (NumberFormatException e) {
+        } catch (final NumberFormatException e) {
             log.error(e.getMessage());
             throw new ConnectException(e);
         }
@@ -183,79 +197,84 @@ public class ElasticWriter {
      * Connects to Elasticsearch.
      */
     public void connect() {
-        log.trace("[{}] Entry {}.connect", Thread.currentThread().getId(), classname);
+        log.trace("[{}] Entry {}.connect", Thread.currentThread().getId(), CLASSNAME);
 
         setupConnection();
 
-        // Try to connect to the server 
+        // Try to connect to the server
         while (!connected) {
             try {
                 connectInternal(true);
-            }
-            catch (Exception e) {
+            } catch (final Exception e) {
                 log.error("Cannot connect to Elasticsearch server: {}", e.getMessage());
                 if (!(e instanceof RetriableException))
                     throw new ConnectException(e);
             }
         }
 
-        log.trace("[{}]  Exit {}.connect", Thread.currentThread().getId(), classname);
+        log.trace("[{}]  Exit {}.connect", Thread.currentThread().getId(), CLASSNAME);
     }
 
     /**
-     * Adds a document to the request that's going to be sent to Elasticsearch.
-     * In the BULK API, data is not actually sent yet.
-     * We just add to the batch of data that will be sent during commit.
+     * Adds a document to the request that's going to be sent to Elasticsearch. In
+     * the BULK API, data is not actually sent yet. We just add to the batch of data
+     * that will be sent during commit.
      *
-     * @see the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html">Elasticsearch API</a>
-     * for more information on how the HTTP operations work
+     * @see the <a href=
+     *      "https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html">Elasticsearch
+     *      API</a>
+     *      for more information on how the HTTP operations work
      *
-     * @param record                  The Kafka message and schema to send
+     * @param record The Kafka message and schema to send
      *
-     * @throws RetriableException Operation failed, but connector should continue to retry.
+     * @throws RetriableException Operation failed, but connector should continue to
+     *                            retry.
      * @throws ConnectException   Operation failed and connector should stop.
      */
-    public void send(SinkRecord record) throws ConnectException, RetriableException {
-        log.trace("[{}] Entry {}.send", Thread.currentThread().getId(), classname);
+    public void send(final SinkRecord record) throws ConnectException, RetriableException {
+        log.trace("[{}] Entry {}.send", Thread.currentThread().getId(), CLASSNAME);
 
         connectInternal(false);
 
-        String jsonString = documentBuilder.fromSinkRecord(record);
+        final String jsonString = documentBuilder.fromSinkRecord(record);
 
         log.debug("Received message: \n  " + jsonString);
 
-        // Create the actual identifiers for the document sent to Elasticsearch
-        // - The "index" is generated by a separate configurable class from information 
-        //   in the event
-        String index = indexBuilder.generateIndex(record);
+        // Create the actual identifiers for the document sent to Elasticsearch - The
+        // "index" is generated by a separate configurable class from information in the
+        // event
+        final String index = indexBuilder.generateIndex(record);
 
-        // The document id can either come from the Kafka record's key or be a unique id.
-        String id = identifierBuilder.fromSinkRecord(record);
+        // The document id can either come from the Kafka record's key or be a unique
+        // id.
+        final String id = identifierBuilder.fromSinkRecord(record);
 
-        /* The BULK API requires the body of the request to be a list of pairs of JSON objects
-         * with the first of the pair being the request itself and the second being the document
-         * content. Each element must be separated from the next, and the whole request terminated by
-         * a "\n". So in this method we just add the document to the request body and then leave the
-         * submission until commit time
+        /*
+         * The BULK API requires the body of the request to be a list of pairs of JSON
+         * objects with the first of the pair being the request itself and the second
+         * being the document content. Each element must be separated from the next, and
+         * the whole request terminated by a "\n". So in this method we just add the
+         * document to the request body and then leave the submission until commit time
          */
 
-        /* Example of calling the BULK API
-            curl -X POST "localhost:9200/_bulk" -H 'Content-Type: application/json' -d'
-            { "index" : { "_index" : "test", "_id" : "1" } }
-            { "field1" : "value1" }
-            { "delete" : { "_index" : "test", "_id" : "2" } }
-            { "create" : { "_index" : "test", "_id" : "3" } }
-            { "field1" : "value3" }
-            { "update" : {"_id" : "1", "_index" : "test"} }
-            { "doc" : {"field2" : "value2"} }
-            '
+        /*
+         * Example of calling the BULK API
+         * curl -X POST "localhost:9200/_bulk" -H 'Content-Type: application/json' -d'
+         * { "index" : { "_index" : "test", "_id" : "1" } }
+         * { "field1" : "value1" }
+         * { "delete" : { "_index" : "test", "_id" : "2" } }
+         * { "create" : { "_index" : "test", "_id" : "3" } }
+         * { "field1" : "value3" }
+         * { "update" : {"_id" : "1", "_index" : "test"} }
+         * { "doc" : {"field2" : "value2"} }
+         * '
          */
 
-        JSONObject line = new JSONObject();
-        JSONObject label = new JSONObject();
+        final JSONObject line = new JSONObject();
+        final JSONObject label = new JSONObject();
 
         // If the document is not empty, add it to the index
-        if ((jsonString != null) && !jsonString.isEmpty()) {
+        if (jsonString != null && !jsonString.isEmpty()) {
             label.put("_index", index);
             label.put("_id", id);
             line.put("index", label);
@@ -266,8 +285,7 @@ public class ElasticWriter {
             bulkMsg.append("\n");
 
             log.debug("Index document: index=" + index + ", _id=" + id);
-        }
-        else {
+        } else {
             // If the document ID is not unique, an empty record deletes from the index
             if (!identifierBuilder.isUnique()) {
                 label.put("_index", index);
@@ -280,23 +298,25 @@ public class ElasticWriter {
             }
         }
 
-        log.trace("[{}]  Exit {}.send", Thread.currentThread().getId(), classname);
+        log.trace("[{}]  Exit {}.send", Thread.currentThread().getId(), CLASSNAME);
     }
 
     /**
      * Executes the current transaction. At this point we send a single REST call to
      * the server containing all documents that need to be created during the batch.
-     * This call is done synchronously to ensure we get a reasonable return code, and to
+     * This call is done synchronously to ensure we get a reasonable return code,
+     * and to
      * allow errors to be dealt with.
      *
-     * @throws RetriableException Operation failed, but connector should continue to retry.
+     * @throws RetriableException Operation failed, but connector should continue to
+     *                            retry.
      * @throws ConnectException   Operation failed, and connector should stop.
      */
     public void commit() throws ConnectException, RetriableException {
         if (bulkMsg.length() == 0)
             return;
 
-        log.trace("[{}] Entry {}.commit", Thread.currentThread().getId(),classname);
+        log.trace("[{}] Entry {}.commit", Thread.currentThread().getId(), CLASSNAME);
 
         connectInternal(false);
 
@@ -305,20 +325,21 @@ public class ElasticWriter {
 
         log.debug("About to put bulk message {} to {}", bulkMsg.toString(), destination);
 
-        ContentResponse response=null;
+        ContentResponse response = null;
         try {
             response = httpClient.newRequest(destination)
-                                 .timeout(jettyOperationTimeoutSec, TimeUnit.SECONDS)
-                                 .method(HttpMethod.POST)
-                                 .content(new StringContentProvider(bulkMsg.toString()), "application/json")
-                                 .send();
+                    .timeout(jettyOperationTimeoutSec, TimeUnit.SECONDS)
+                    .method(HttpMethod.POST)
+                    .content(new StringContentProvider(bulkMsg.toString()), "application/json")
+                    .send();
 
-            // Always empty the request batch, even after a failure as the Connector framework
+            // Always empty the request batch, even after a failure as the Connector
+            // framework
             // will restart the batch.
             bulkMsg.delete(0, bulkMsg.length());
 
-            int status = (response != null) ? response.getStatus() : -100;
-            String responseString = (response != null) ? response.toString() : "UNKNOWN";
+            final int status = (response != null) ? response.getStatus() : -100;
+            final String responseString = (response != null) ? response.toString() : "UNKNOWN";
             log.debug("Bulk insert returned {} {}", status, responseString);
 
             if (status < 200 || status > 299) {
@@ -327,55 +348,53 @@ public class ElasticWriter {
 
             // After a success, reset the number of failures.
             commitFailures = 0;
-        }
-        catch (Exception e) {
+        } catch (final Exception e) {
             log.error("Error flushing messages to Elasticsearch", e);
             commitFailures++;
             bulkMsg.delete(0, bulkMsg.length());
-            if (commitFailures > maxCommitFailures) {      
-                throw new ConnectException("Reached maximum failures of commit processing. Last error: " + e.getMessage());
-            }
-            else {
+            if (commitFailures > maxCommitFailures) {
+                throw new ConnectException(
+                        "Reached maximum failures of commit processing. Last error: " + e.getMessage());
+            } else {
                 throw new RetriableException(e.getMessage());
             }
         }
 
-        log.trace("[{}]  Exit {}.commit", Thread.currentThread().getId(), classname);
+        log.trace("[{}]  Exit {}.commit", Thread.currentThread().getId(), CLASSNAME);
     }
 
     /**
      * Closes the connection.
      */
     public void close() {
-        log.trace("[{}] Entry {}.close", Thread.currentThread().getId(), classname);
+        log.trace("[{}] Entry {}.close", Thread.currentThread().getId(), CLASSNAME);
 
         try {
             connected = false;
             if (httpClient != null) {
                 httpClient.stop();
             }
-        }
-        catch (Exception e) {
-            ;
-        }
-        finally {
+        } catch (final Exception e) {
+        } finally {
             httpClient = null;
             log.debug("Connection to Elasticsearch closed");
         }
 
-        log.trace("[{}]  Exit {}.close", Thread.currentThread().getId(), classname);
+        log.trace("[{}]  Exit {}.close", Thread.currentThread().getId(), CLASSNAME);
     }
 
     /**
-     * Internal method to connect to Elasticsearch. We do a synchronous connection and query
+     * Internal method to connect to Elasticsearch. We do a synchronous connection
+     * and query
      * to the server to make sure it's reachable. The query is one that all servers
      * should respond to.
      *
-     * @throws RetriableException Operation failed, but connector should continue to retry.
+     * @throws RetriableException Operation failed, but connector should continue to
+     *                            retry.
      * @throws ConnectException   Operation failed and connector should stop.
      */
-    protected void connectInternal(boolean initialConnection) throws ConnectException, RetriableException {
-        log.trace("[{}] Entry {}.connectInternal", Thread.currentThread().getId(), classname);
+    protected void connectInternal(final boolean initialConnection) throws ConnectException, RetriableException {
+        log.trace("[{}] Entry {}.connectInternal", Thread.currentThread().getId(), CLASSNAME);
 
         if (connected) {
             return;
@@ -388,20 +407,21 @@ public class ElasticWriter {
         try {
             httpClient.start();
 
-            // Doing a health check. We don't care about the return information
-            // only that the request succeeds. This is done synchronously. This particular
-            // URL is documented as giving some build information about the Elasticsearch server.
-            String healthDestination =  uri + "/_cat/health";
+            // Doing a health check. We don't care about the return information only that
+            // the request succeeds. This is done synchronously. This particular URL is
+            // documented as giving some build information about the Elasticsearch server.
+            final String healthDestination = uri + "/_cat/health";
 
-            ContentResponse response = httpClient.newRequest(healthDestination)
-                                                 .timeout(jettyConnectionTimeoutSec, TimeUnit.SECONDS)
-                                                 .method(HttpMethod.GET)
-                                                 .send();
-            int status = response.getStatus();
- 
+            final ContentResponse response = httpClient.newRequest(healthDestination)
+                    .timeout(jettyConnectionTimeoutSec, TimeUnit.SECONDS)
+                    .method(HttpMethod.GET)
+                    .send();
+            final int status = response.getStatus();
+
             log.debug("Connection test returned {}", response.toString());
 
-            // 4xx errors including 404 (page not found) are treated as immediately fatal as it
+            // 4xx errors including 404 (page not found) are treated as immediately fatal as
+            // it
             // suggests either a failed server or a bad configuration for this connector.
             if (status >= 400 && status <= 499)
                 throw new GeneralSecurityException(response.getReason());
@@ -412,52 +432,51 @@ public class ElasticWriter {
             reconnectDelayIndex = 0;
             errorMaxDelay = false;
             connected = true;
-        }
-        catch (Exception e) {
+        } catch (final Exception e) {
             int idx = reconnectDelayIndex;
 
-            // Try to connect forever (or until some higher layer gives up). The
-            // delay array has a set of values to sleep for until we reach the
-            // maximum delay. And then we continue using that final delay value.
-            if (idx >= reconnectDelayMs.length) {
-                idx = reconnectDelayMs.length - 1;
+            // Try to connect forever (or until some higher layer gives up). The delay array
+            // has a set of values to sleep for until we reach the maximum delay. And then
+            // we continue using that final delay value.
+            if (idx >= RECONNECT_DELAY_MS.length) {
+                idx = RECONNECT_DELAY_MS.length - 1;
                 // Give an error message once
                 if (!errorMaxDelay) {
                     log.error("Maximum connection delay value reached. Continuing to try connections...");
                     errorMaxDelay = true;
                 }
-            }  
-            try {
-                Thread.sleep(reconnectDelayMs[idx]);
-                reconnectDelayIndex++;
             }
-            catch (InterruptedException ie) {
-                ;
+            try {
+                Thread.sleep(RECONNECT_DELAY_MS[idx]);
+                reconnectDelayIndex++;
+            } catch (final InterruptedException ie) {
             }
 
             throw handleException(e, initialConnection);
         }
 
-        log.trace("[{}]  Exit {}.connectInternal", Thread.currentThread().getId(), classname);
+        log.trace("[{}]  Exit {}.connectInternal", Thread.currentThread().getId(), CLASSNAME);
     }
 
     /**
-     * Handles exceptions from Elasticsearch. Almost all exceptions are treated as retriable meaning that the
-     * connector can keep running. Security problems are fatal. The initialConnection is not used at the moment, 
-     * but might be used to process failures differently depending on whether this is a startup or reconnect scenario.
+     * Handles exceptions from Elasticsearch. Almost all exceptions are treated as
+     * retriable meaning that the connector can keep running. Security problems are
+     * fatal. The initialConnection is not used at the moment, but might be used to
+     * process failures differently depending on whether this is a startup or
+     * reconnect scenario.
      */
-    private ConnectException handleException(Exception e, boolean initialConnection) {
+    private ConnectException handleException(final Exception e, final boolean initialConnection) {
         boolean isRetriable = false;
         boolean mustClose = true;
 
-        log.info("Exception {} needs to be handled. ReconnectCount {}", e.getMessage(),reconnectDelayIndex);
+        log.info("Exception {} needs to be handled. ReconnectCount {}", e.getMessage(), reconnectDelayIndex);
 
-        // Apart from security problems, all exceptions during connect are treated as retriable
+        // Apart from security problems, all exceptions during connect are treated as
+        // retriable
         if (e instanceof GeneralSecurityException) {
             isRetriable = false;
             mustClose = true;
-        }
-        else { 
+        } else {
             isRetriable = true;
             mustClose = false;
         }
@@ -478,10 +497,10 @@ public class ElasticWriter {
      * authentication, TLS options and any defined Jetty tuning parameters.
      */
     private HttpClient setupConnection() {
-        SslContextFactory sslContextFactory = new SslContextFactory.Client();
+        final SslContextFactory sslContextFactory = new SslContextFactory.Client();
 
-        // Point at the keystore and truststore. The passwords
-        // are only set if necessary, as a default truststore may not be protected with password.
+        // Point at the keystore and truststore. The passwords are only set if
+        // necessary, as a default truststore may not be protected with password.
         if (notNullOrEmpty(keyStore)) {
             protocol = "https";
             sslContextFactory.setKeyStorePath(keyStore);
@@ -499,9 +518,8 @@ public class ElasticWriter {
 
         try {
             uri = new URI(protocol + "://" + connection);
-        }
-        catch (URISyntaxException e) {
-            log.error("Invalid URI {}",uri.toString());
+        } catch (final URISyntaxException e) {
+            log.error("Invalid URI {}", uri.toString());
             throw new ConnectException(e);
         }
 
@@ -516,20 +534,21 @@ public class ElasticWriter {
 
         // Authentication using userid/password is enabled here
         if (notNullOrEmpty(userid)) {
-            AuthenticationStore auth = httpClient.getAuthenticationStore();
+            final AuthenticationStore auth = httpClient.getAuthenticationStore();
             auth.addAuthenticationResult(new BasicAuthentication.BasicResult(uri, userid, password));
         }
 
         // Tuning parameters for Jetty connections.
-        int maxConnections = jettyMaxConnections;
+        final int maxConnections = jettyMaxConnections;
         log.debug("Setting HTTP maxConnections to {}", maxConnections);
         httpClient.setMaxConnectionsPerDestination(maxConnections);
 
-        // Setting an idle timeout can reduce the number of active threads/connections when set to non-zero value
-        int idleTimeout = jettyIdleTimeoutSec;
+        // Setting an idle timeout can reduce the number of active threads/connections
+        // when set to non-zero value
+        final int idleTimeout = jettyIdleTimeoutSec;
         if (idleTimeout > 0) {
             log.debug("Setting idleTimeout to {} seconds", idleTimeout);
-            httpClient.setIdleTimeout((long)(idleTimeout * 1000)); // Be explicit about casting to API datatype
+            httpClient.setIdleTimeout((long) (idleTimeout * 1000)); // Be explicit about casting to API datatype
         }
 
         // How long to wait for the server to respond during initial connection
@@ -541,28 +560,29 @@ public class ElasticWriter {
     }
 
     // set HTTP proxy settings
-    private void setProxy(HttpClient httpClient) {
+    private void setProxy(final HttpClient httpClient) {
         if (proxyHost != null) {
-            HttpProxy proxy = new HttpProxy(proxyHost, proxyPort);
+            final HttpProxy proxy = new HttpProxy(proxyHost, proxyPort);
             httpClient.getProxyConfiguration().getProxies().add(proxy);
         }
     }
 
-    // Jetty 9.4.11 disables all ciphers beginning "SSL_" but when running under the IBM JRE it
-    // has the effect of removing ALL the ciphersuites because that JRE has a different naming
-    // pattern for the Ciphers.
+    // Jetty 9.4.11 disables all ciphers beginning "SSL_" but when running under the
+    // IBM JRE it has the effect of removing ALL the ciphersuites because that JRE
+    // has a different naming pattern for the Ciphers.
     //
     // So we cannot rely on the Jetty default behaviour and if we can tell we're in
-    // the IBM JRE we instead copy the patterns that Jetty disables except for one overreaching expression.
-    private void setDefaults(SslContextFactory sslContextFactory) {
-        log.trace("[{}] Entry {}.setDefaults", Thread.currentThread().getId(),classname);
+    // the IBM JRE we instead copy the patterns that Jetty disables except for one
+    // overreaching expression.
+    private void setDefaults(final SslContextFactory sslContextFactory) {
+        log.trace("[{}] Entry {}.setDefaults", Thread.currentThread().getId(), CLASSNAME);
 
         // Only support TLS 1.2
-        String protocols[] = new String[] { "TLSv1.2" };
+        final String[] protocols = new String[] {"TLSv1.2"};
         sslContextFactory.setIncludeProtocols(protocols);
 
-        String vendor = System.getProperty("java.vendor");
-        if (vendor != null && vendor.toUpperCase().contains("IBM")) {
+        final String vendor = System.getProperty("java.vendor");
+        if (vendor != null && vendor.toUpperCase(Locale.ENGLISH).contains("IBM")) {
             log.debug("Doing manual exclusion of ciphersuites");
 
             // Exclude weak / insecure ciphers
@@ -570,8 +590,9 @@ public class ElasticWriter {
             // Exclude ciphers that don't support forward secrecy
             sslContextFactory.addExcludeCipherSuites("^TLS_RSA_.*$");
 
-            // The Jetty code uses the simple SSL_.* pattern, but this pattern has a similar effect
-            // for the IBM JRE which uses 'SSL' instead of 'TLS' in many of the canonical cipher names
+            // The Jetty code uses the simple SSL_.* pattern, but this pattern has a similar
+            // effect for the IBM JRE which uses 'SSL' instead of 'TLS' in many of the
+            // canonical cipher names
             sslContextFactory.addExcludeCipherSuites("^SSL_RSA_.*$");
 
             // Exclude NULL ciphers (that are accidentally present due to Include patterns)
@@ -580,17 +601,17 @@ public class ElasticWriter {
             sslContextFactory.addExcludeCipherSuites("^.*_anon_.*$");
         }
 
-        log.trace("[{}]  Exit {}.setDefaults", Thread.currentThread().getId(), classname);
+        log.trace("[{}]  Exit {}.setDefaults", Thread.currentThread().getId(), CLASSNAME);
         return;
     }
 
-    boolean isNullOrEmpty(String s) {
-        if (s==null || s.isEmpty())
+    boolean isNullOrEmpty(final String s) {
+        if (s == null || s.isEmpty())
             return true;
         return false;
     }
 
-    boolean notNullOrEmpty(String s) {
+    boolean notNullOrEmpty(final String s) {
         return !isNullOrEmpty(s);
     }
 }

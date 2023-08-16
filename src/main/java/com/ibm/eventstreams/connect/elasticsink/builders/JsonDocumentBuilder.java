@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corporation
+ * Copyright 2020, 2023 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,23 +22,23 @@ import org.apache.kafka.connect.sink.SinkRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static java.nio.charset.StandardCharsets.*;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Builds JSON documents from Kafka Connect SinkRecords
  */
 public class JsonDocumentBuilder implements DocumentBuilder {
-    private static final String classname = JsonDocumentBuilder.class.getName();
+    private static final String CLASSNAME = JsonDocumentBuilder.class.getName();
     private static final Logger log = LoggerFactory.getLogger(JsonDocumentBuilder.class);
 
     private JsonConverter converter;
 
     public JsonDocumentBuilder() {
-        log.info("Building documents using {}", classname);
+        log.info("Building documents using {}", CLASSNAME);
         converter = new JsonConverter();
-        
+
         // We just want the payload, not the schema in the output message
-        HashMap<String, String> m = new HashMap<>();
+        final HashMap<String, String> m = new HashMap<>();
         m.put("schemas.enable", "false");
 
         // Convert the value, not the key (isKey == false)
@@ -48,21 +48,21 @@ public class JsonDocumentBuilder implements DocumentBuilder {
     /**
      * Convert a Kafka Connect SinkRecord into a message.
      *
-     * @param record             the Kafka Connect SinkRecord
+     * @param record the Kafka Connect SinkRecord
      *
      * @return the message
      */
     @Override
-    public String fromSinkRecord(SinkRecord record) {
-        log.trace("[{}] Entry {}.fromSinkRecord", Thread.currentThread().getId(), classname);
+    public String fromSinkRecord(final SinkRecord record) {
+        log.trace("[{}] Entry {}.fromSinkRecord", Thread.currentThread().getId(), CLASSNAME);
 
-        byte[] payload = converter.fromConnectData(record.topic(), record.valueSchema(), record.value());
+        final byte[] payload = converter.fromConnectData(record.topic(), record.valueSchema(), record.value());
         String document = null;
         if (payload != null) {
             document = new String(payload, UTF_8);
         }
 
-        log.trace("[{}] Exit {}.fromSinkRecord", Thread.currentThread().getId(), classname);
+        log.trace("[{}] Exit {}.fromSinkRecord", Thread.currentThread().getId(), CLASSNAME);
         return document;
     }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corporation
+ * Copyright 2020, 2023 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package com.ibm.eventstreams.connect.elasticsink.builders;
 
+import java.util.Locale;
 import java.util.Map;
 
 import org.apache.kafka.connect.errors.ConnectException;
@@ -26,7 +27,7 @@ import org.slf4j.LoggerFactory;
  * Creates the name of the index into which the event is inserted
  */
 public class DefaultIndexBuilder implements IndexBuilder {
-    private static final String classname = DefaultIndexBuilder.class.getName();
+    private static final String CLASSNAME = DefaultIndexBuilder.class.getName();
     private static final Logger log = LoggerFactory.getLogger(DefaultIndexBuilder.class);
 
     /**
@@ -38,15 +39,15 @@ public class DefaultIndexBuilder implements IndexBuilder {
      */
     @Override
     public void configure(final Map<String, String> props) {
-        log.trace("[{}] Entry {}.configure, props={}", Thread.currentThread().getId(), classname, props);
-        log.trace("[{}]  Exit {}.configure", Thread.currentThread().getId(), classname);
+        log.trace("[{}] Entry {}.configure, props={}", Thread.currentThread().getId(), CLASSNAME, props);
+        log.trace("[{}]  Exit {}.configure", Thread.currentThread().getId(), CLASSNAME);
     }
 
     /**
      * Convert a Kafka Connect SinkRecord into a message. This implementation is
      * very simple. It just converts the topic associated with the record into
      * lowercase.
-     * 
+     *
      * <p>The index name must be:
      * <ul>
      * <li> lowercase
@@ -55,28 +56,28 @@ public class DefaultIndexBuilder implements IndexBuilder {
      * <li> cannot be . or ..
      * <li> maximum length of 255 bytes
      * </ul>
-     * 
+     *
      * The Kafka topic name can be:
      * <ul>
      * <li> a-z,A-Z,0-9,.,_.-
      * <li> maximum length of 249 characters
      * </ul>
-     * 
+     *
      * @param record the Kafka Connect SinkRecord
      *
      * @return the message
      */
     @Override
     public String generateIndex(final SinkRecord record) {
-        log.trace("[{}] Entry {}.generateIndex", Thread.currentThread().getId(), classname);
+        log.trace("[{}] Entry {}.generateIndex", Thread.currentThread().getId(), CLASSNAME);
 
-        final String index = record.topic().toLowerCase();
+        final String index = record.topic().toLowerCase(Locale.ENGLISH);
 
         if (index.equals(".") || index.equals("..") || index.startsWith("-") || index.startsWith("_")) {
             throw new ConnectException("Invalid index name " + index + " for topic name " + record.topic());
         }
 
-        log.trace("[{}] Exit {}.generateIndex", Thread.currentThread().getId(), classname);
+        log.trace("[{}] Exit {}.generateIndex", Thread.currentThread().getId(), CLASSNAME);
 
         return index;
     }

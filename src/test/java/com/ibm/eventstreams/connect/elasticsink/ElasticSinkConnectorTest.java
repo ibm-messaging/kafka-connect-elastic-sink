@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corporation
+ * Copyright 2020, 2023 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,14 +25,14 @@ import static org.junit.Assert.assertTrue;
 public class ElasticSinkConnectorTest {
     @Test
     public void testVersion() {
-        String version = new ElasticSinkConnector().version();
-        String expectedVersion = System.getProperty("connectorVersion");
+        final String version = new ElasticSinkConnector().version();
+        final String expectedVersion = System.getProperty("connectorVersion");
         assertEquals("Expected connector version to match version of built jar file.", expectedVersion, version);
     }
 
     @Test
     public void testConnectorType() {
-        Connector connector = new ElasticSinkConnector();
+        final Connector connector = new ElasticSinkConnector();
         assertTrue(SinkConnector.class.isAssignableFrom(connector.getClass()));
     }
 }
