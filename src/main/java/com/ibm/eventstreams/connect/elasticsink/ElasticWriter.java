@@ -28,13 +28,15 @@ import java.util.concurrent.TimeUnit;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
+import org.eclipse.jetty.client.AuthenticationStore;
+import org.eclipse.jetty.client.BasicAuthentication;
+import org.eclipse.jetty.client.ContentResponse;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpProxy;
-import org.eclipse.jetty.client.api.AuthenticationStore;
-import org.eclipse.jetty.client.api.ContentResponse;
-import org.eclipse.jetty.client.util.BasicAuthentication;
-import org.eclipse.jetty.client.util.StringContentProvider;
+import org.eclipse.jetty.client.StringRequestContent;
+import org.eclipse.jetty.client.transport.HttpClientTransportDynamic;
 import org.eclipse.jetty.http.HttpMethod;
+import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -141,7 +143,7 @@ public class ElasticWriter {
             log.debug("Instantiated index builder {}", indexBuilderClass);
         }
         catch (ClassNotFoundException | ClassCastException | IllegalAccessException | InstantiationException | NullPointerException e) {
-            log.error("Could not instantiate index builder '{}' {}", indexBuilderClass,e);
+            log.error("Could not instantiate index builder '{}' {}", indexBuilderClass,e.getMessage());
             throw new ConnectException("Could not instantiate index builder", e);
         }
 
@@ -152,7 +154,7 @@ public class ElasticWriter {
             log.debug("Instantiated document identifier builder {}", identifierBuilderClass);
         }
         catch (ClassNotFoundException | ClassCastException | IllegalAccessException | InstantiationException | NullPointerException e) {
-            log.error("Could not instantiate document identifier builder '{}' {}", identifierBuilderClass,e);
+            log.error("Could not instantiate document identifier builder '{}' {}", identifierBuilderClass,e.getMessage());
             throw new ConnectException("Could not instantiate document identifier builder", e);
         }
     }
@@ -207,7 +209,7 @@ public class ElasticWriter {
      * In the BULK API, data is not actually sent yet.
      * We just add to the batch of data that will be sent during commit.
      *
-     * @see the <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html">Elasticsearch API</a>
+     * @see <a href="https://www.elastic.co/guide/en/elasticsearch/reference/current/docs-index_.html">the Elasticsearch API</a>
      * for more information on how the HTTP operations work
      *
      * @param record                  The Kafka message and schema to send
@@ -310,7 +312,7 @@ public class ElasticWriter {
             response = httpClient.newRequest(destination)
                                  .timeout(jettyOperationTimeoutSec, TimeUnit.SECONDS)
                                  .method(HttpMethod.POST)
-                                 .content(new StringContentProvider(bulkMsg.toString()), "application/json")
+                                 .body(new StringRequestContent("application/json", bulkMsg.toString()))
                                  .send();
 
             // Always empty the request batch, even after a failure as the Connector framework
@@ -453,11 +455,7 @@ public class ElasticWriter {
         log.info("Exception {} needs to be handled. ReconnectCount {}", e.getMessage(),reconnectDelayIndex);
 
         // Apart from security problems, all exceptions during connect are treated as retriable
-        if (e instanceof GeneralSecurityException) {
-            isRetriable = false;
-            mustClose = true;
-        }
-        else { 
+        if (!(e instanceof GeneralSecurityException)) {
             isRetriable = true;
             mustClose = false;
         }
@@ -478,7 +476,7 @@ public class ElasticWriter {
      * authentication, TLS options and any defined Jetty tuning parameters.
      */
     private HttpClient setupConnection() {
-        SslContextFactory sslContextFactory = new SslContextFactory.Client();
+        SslContextFactory.Client sslContextFactory = new SslContextFactory.Client();
 
         // Point at the keystore and truststore. The passwords
         // are only set if necessary, as a default truststore may not be protected with password.
@@ -509,8 +507,11 @@ public class ElasticWriter {
         // Set the Protocols and CipherSuites that are permitted
         setDefaults(sslContextFactory);
 
+        ClientConnector clientConnector = new ClientConnector();
+        clientConnector.setSslContextFactory(sslContextFactory);
+
         if (protocol.equals("https"))
-            httpClient = new HttpClient(sslContextFactory);
+            httpClient = new HttpClient(new HttpClientTransportDynamic(clientConnector));
         else
             httpClient = new HttpClient();
 
@@ -529,11 +530,11 @@ public class ElasticWriter {
         int idleTimeout = jettyIdleTimeoutSec;
         if (idleTimeout > 0) {
             log.debug("Setting idleTimeout to {} seconds", idleTimeout);
-            httpClient.setIdleTimeout((long)(idleTimeout * 1000)); // Be explicit about casting to API datatype
+            httpClient.setIdleTimeout(idleTimeout * 1000L); // Be explicit about casting to API datatype
         }
 
         // How long to wait for the server to respond during initial connection
-        httpClient.setConnectTimeout(jettyConnectionTimeoutSec * 1000);
+        httpClient.setConnectTimeout(jettyConnectionTimeoutSec * 1000L);
 
         setProxy(httpClient);
 
@@ -554,11 +555,11 @@ public class ElasticWriter {
     //
     // So we cannot rely on the Jetty default behaviour and if we can tell we're in
     // the IBM JRE we instead copy the patterns that Jetty disables except for one overreaching expression.
-    private void setDefaults(SslContextFactory sslContextFactory) {
+    private void setDefaults(SslContextFactory.Client sslContextFactory) {
         log.trace("[{}] Entry {}.setDefaults", Thread.currentThread().getId(),classname);
 
         // Only support TLS 1.2
-        String protocols[] = new String[] { "TLSv1.2" };
+        String[] protocols = new String[] { "TLSv1.2" };
         sslContextFactory.setIncludeProtocols(protocols);
 
         String vendor = System.getProperty("java.vendor");
@@ -585,9 +586,7 @@ public class ElasticWriter {
     }
 
     boolean isNullOrEmpty(String s) {
-        if (s==null || s.isEmpty())
-            return true;
-        return false;
+        return s == null || s.isEmpty();
     }
 
     boolean notNullOrEmpty(String s) {
