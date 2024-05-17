@@ -2,32 +2,15 @@ version: '3'
 
 services:
   elastic:
-    image: elasticsearch:7.6.0
-    environment:
-    - discovery.type=single-node
-    - ELASTICSEARCH_PASSWORD=passw0rd
+    image: docker.elastic.co/elasticsearch/elasticsearch:${STACK_VERSION}
     ports:
-    - "9200:9200"
-    - "9300:9300"
-    #Uncomment these and modify host path if you want persistent data
-    #volumes:
-    #  - '/var/docker/elasticsearch:/usr/share/elasticsearch/data'
-
-  kibana:
-    image: docker.elastic.co/kibana/kibana:7.6.0
-    depends_on: 
-    - elastic
-    ports:
-    - "5601:5601"
+      - ${ES_PORT}:9200
     environment:
-    - ELASTICSEARCH_HOSTS=http://elastic:9200
-    - ELASTICSEARCH_USERNAME=elastic
-    #Uncomment these and modify host path if you want persistent data
-    #volumes:
-    #  - '/var/docker/kibana:/usr/share/kibana/data'
+      - discovery.type=single-node
+      - xpack.security.enabled=false
 
   zookeeper:
-    image: strimzi/kafka:latest-kafka-2.5.0
+    image: quay.io/strimzi/kafka:latest-kafka-3.6.1
     command: [
         "sh", "-c",
         "bin/zookeeper-server-start.sh config/zookeeper.properties"
@@ -38,7 +21,7 @@ services:
       LOG_DIR: /tmp/logs
 
   kafka:
-    image: strimzi/kafka:latest-kafka-2.5.0
+    image: quay.io/strimzi/kafka:latest-kafka-3.6.1
     command: [
       "sh", "-c",
       "bin/kafka-server-start.sh config/server.properties --override listeners=$${KAFKA_LISTENERS} --override advertised.listeners=$${KAFKA_ADVERTISED_LISTENERS} --override zookeeper.connect=$${KAFKA_ZOOKEEPER_CONNECT}"
@@ -63,4 +46,3 @@ services:
     environment:
     - CONNECT_BOOTSTRAP_SERVERS=kafka:9092
     - CONNECT_ES_CONNECTION=elastic:9200
-    #network_mode: "host"

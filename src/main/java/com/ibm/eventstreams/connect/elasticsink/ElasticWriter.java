@@ -28,15 +28,13 @@ import java.util.concurrent.TimeUnit;
 import org.apache.kafka.connect.errors.ConnectException;
 import org.apache.kafka.connect.errors.RetriableException;
 import org.apache.kafka.connect.sink.SinkRecord;
-import org.eclipse.jetty.client.AuthenticationStore;
-import org.eclipse.jetty.client.BasicAuthentication;
-import org.eclipse.jetty.client.ContentResponse;
 import org.eclipse.jetty.client.HttpClient;
 import org.eclipse.jetty.client.HttpProxy;
-import org.eclipse.jetty.client.StringRequestContent;
-import org.eclipse.jetty.client.transport.HttpClientTransportDynamic;
+import org.eclipse.jetty.client.api.AuthenticationStore;
+import org.eclipse.jetty.client.api.ContentResponse;
+import org.eclipse.jetty.client.util.BasicAuthentication;
+import org.eclipse.jetty.client.util.StringContentProvider;
 import org.eclipse.jetty.http.HttpMethod;
-import org.eclipse.jetty.io.ClientConnector;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -312,7 +310,7 @@ public class ElasticWriter {
             response = httpClient.newRequest(destination)
                                  .timeout(jettyOperationTimeoutSec, TimeUnit.SECONDS)
                                  .method(HttpMethod.POST)
-                                 .body(new StringRequestContent("application/json", bulkMsg.toString()))
+                                 .content(new StringContentProvider(bulkMsg.toString()), "application/json")
                                  .send();
 
             // Always empty the request batch, even after a failure as the Connector framework
@@ -512,11 +510,8 @@ public class ElasticWriter {
         // Set the Protocols and CipherSuites that are permitted
         setDefaults(sslContextFactory);
 
-        ClientConnector clientConnector = new ClientConnector();
-        clientConnector.setSslContextFactory(sslContextFactory);
-
         if (protocol.equals("https"))
-            httpClient = new HttpClient(new HttpClientTransportDynamic(clientConnector));
+            httpClient = new HttpClient(sslContextFactory);
         else
             httpClient = new HttpClient();
 
