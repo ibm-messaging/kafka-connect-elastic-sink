@@ -1,4 +1,4 @@
-FROM strimzi/kafka:latest-kafka-3.6.1 as kafka
+FROM quay.io/strimzi/kafka:latest-kafka-3.6.1 as kafka
 
 FROM ibm-semeru-runtimes:open-17-jre
 
