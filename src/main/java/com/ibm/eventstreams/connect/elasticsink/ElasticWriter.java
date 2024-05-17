@@ -327,6 +327,11 @@ public class ElasticWriter {
                 throw new RetriableException(responseString);
             }
 
+            final JSONObject esResponse = new JSONObject(response.getContentAsString());
+            if (esResponse.getBoolean("errors")) {
+                log.error("Elasticsearch returned errors: {}", esResponse);
+            }
+
             // After a success, reset the number of failures.
             commitFailures = 0;
         }
