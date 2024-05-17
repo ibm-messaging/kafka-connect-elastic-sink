@@ -1,6 +1,6 @@
-FROM strimzi/kafka:latest-kafka-2.6.0 as kafka
+FROM quay.io/strimzi/kafka:latest-kafka-3.6.1 as kafka
 
-FROM ibmjava:8-jre
+FROM ibm-semeru-runtimes:open-17-jre
 
 RUN addgroup --gid 5000 --system esgroup && \
     adduser --uid 5000 --ingroup esgroup --system esuser

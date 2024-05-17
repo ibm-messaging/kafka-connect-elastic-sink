@@ -35,7 +35,7 @@ For example, you could run `docker-compose logs connector` to look at the
 log files for one of the containers.
 
 If you want to see the documents that have been put into Elasticsearch, you can
-use the Kibana instance by pointing a browser at http://localhost:5601.
+use the Elasticsearch REST api with the command `curl http://localhost:9200/essinktest/_search`.
 
 When you want to stop the containers, run `docker-compose --project-name qs down`.
 

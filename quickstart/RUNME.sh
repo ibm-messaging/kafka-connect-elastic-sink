@@ -33,6 +33,10 @@
 curdir=`pwd`
 rc=0
 
+if [ -z "$DOCKER_EXEC" ]; then
+  DOCKER_EXEC="docker"
+fi
+
 cd ..
 
 # Compile the code
@@ -43,7 +47,7 @@ then
 fi
 
 # Build the generated connector jar into a container
-docker build --rm -t kafka-connect-elastic-sink:latest -f quickstart/Dockerfile .
+${DOCKER_EXEC} build --rm -t kafka-connect-elastic-sink:latest -f quickstart/Dockerfile .
 if [ $? -ne 0 ]
 then
   exit 1
