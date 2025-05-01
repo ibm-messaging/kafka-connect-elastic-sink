@@ -69,7 +69,7 @@ public class ElasticWriter {
     private String trustStore;
     private String trustStorePassword;
 
-    private String protocol = "http";
+    private String protocol;
     private String proxyHost = null;
     private int proxyPort = 0;
 
@@ -107,6 +107,7 @@ public class ElasticWriter {
         keyStorePassword = props.get(ElasticSinkConnector.CONFIG_NAME_ES_TLS_KEYSTORE_PASSWORD);
         trustStore = props.get(ElasticSinkConnector.CONFIG_NAME_ES_TLS_TRUSTSTORE_LOCATION);
         trustStorePassword = props.get(ElasticSinkConnector.CONFIG_NAME_ES_TLS_TRUSTSTORE_PASSWORD);
+        protocol = props.getOrDefault(ElasticSinkConnector.CONFIG_NAME_ES_PROTOCOL,ElasticSinkConnector.DEFAULT_ES_PROTOCOL);
 
         // Jetty configuration for HTTP client behaviour
         proxyHost = props.get(ElasticSinkConnector.CONFIG_NAME_ES_HTTP_PROXY_HOST);

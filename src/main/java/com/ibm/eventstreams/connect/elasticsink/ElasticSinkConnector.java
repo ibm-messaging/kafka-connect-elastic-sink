@@ -50,6 +50,11 @@ public class ElasticSinkConnector extends SinkConnector {
     public static final String CONFIG_DOCUMENTATION_ES_PASSWORD = "The password for authenticating with Elasticsearch.";
     public static final String CONFIG_DISPLAY_ES_PASSWORD = "Password";
 
+    public static final String DEFAULT_ES_PROTOCOL = "http";
+    public static final String CONFIG_NAME_ES_PROTOCOL = "es.protocol";
+    public static final String CONFIG_DOCUMENTATION_ES_PROTOCOL = "The protocol to connect to Elasticsearch.";
+    public static final String CONFIG_DISPLAY_ES_PROTOCOL = "HTTP/ HTTPS";
+
     public static final String CONFIG_NAME_ES_TLS_KEYSTORE_LOCATION = "es.tls.keystore.location";
     public static final String CONFIG_DOCUMENTATION_ES_TLS_KEYSTORE_LOCATION = "The path to the JKS keystore to use for the TLS connection.";
     public static final String CONFIG_DISPLAY_ES_TLS_KEYSTORE_LOCATION = "TLS keystore location";
@@ -209,6 +214,10 @@ public class ElasticSinkConnector extends SinkConnector {
         config.define(CONFIG_NAME_ES_PASSWORD, Type.PASSWORD, null, Importance.MEDIUM,
                       CONFIG_DOCUMENTATION_ES_PASSWORD, CONFIG_GROUP_ES, 3, Width.MEDIUM,
                       CONFIG_DISPLAY_ES_PASSWORD);
+
+        config.define(CONFIG_NAME_ES_PROTOCOL, Type.STRING, DEFAULT_ES_PROTOCOL, Importance.MEDIUM,
+                      CONFIG_DOCUMENTATION_ES_PROTOCOL, CONFIG_GROUP_ES, 4, Width.MEDIUM,
+                      CONFIG_DISPLAY_ES_PROTOCOL);
 
         config.define(CONFIG_NAME_ES_TLS_KEYSTORE_LOCATION, Type.STRING, null, Importance.MEDIUM,
                       CONFIG_DOCUMENTATION_ES_TLS_KEYSTORE_LOCATION, CONFIG_GROUP_ES, 10, Width.MEDIUM,
