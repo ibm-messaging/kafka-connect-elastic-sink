@@ -224,6 +224,74 @@ This mode of operation is suitable if you are using the change data capture tech
 
 Commercial support for this connector is available for customers with a support entitlement for [IBM Event Automation](https://www.ibm.com/products/event-automation) or [IBM Cloud Pak for Integration](https://www.ibm.com/cloud/cloud-pak-for-integration).
 
+## Testing the Connector
+
+A test environment has been set up to validate the connector functionality, including the new SSL verification skip and keystore/truststore type options. The test infrastructure is organized in the `docker-test-environment` directory.
+
+### Test Infrastructure Organization
+
+```shell
+docker-test-environment/
+├── config/                  # Configuration files for testing
+│   ├── connect-distributed.properties
+│   └── elastic-sink-test.json
+├── docker-compose.yml       # Docker Compose configuration
+├── Dockerfile               # Dockerfile for the Kafka Connect container
+└── scripts/                 # Test scripts
+    └── test-connector.sh    # Main test script
+```
+
+### Prerequisites
+
+- Docker and Docker Compose
+- Maven
+- jq (for JSON processing)
+
+### Running the Tests
+
+   ```shell
+   ./run-tests.sh
+   ```
+
+This script will:
+
+- Build the connector
+- Start a test environment with Kafka, Kafka Connect, and Elasticsearch
+- Create a test topic
+- Deploy the connector with the new configuration options
+- Send a test message
+- Verify the message was indexed in Elasticsearch
+
+### Manual Testing
+
+You can also manually test the connector:
+
+1. Navigate to the test environment directory:
+
+   ```shell
+   cd docker-test-environment
+   ```
+
+2. Build the Docker images and start the services:
+
+   ```shell
+   docker-compose up -d
+   ```
+
+3. Deploy the connector:
+
+   ```shell
+   curl -X POST -H "Content-Type: application/json" http://localhost:8083/connectors -d @config/elastic-sink-test.json
+   ```
+
+4. Check the connector status:
+
+   ```shell
+   curl -s http://localhost:8083/connectors/elastic-sink-test/status
+   ```
+
+5. Send test messages to the Kafka topic and verify they appear in Elasticsearch.
+
 ## Issues and contributions
 
 For issues relating specifically to this connector, please use the [GitHub issue tracker](https://github.com/ibm-messaging/kafka-connect-elastic-sink/issues). If you do want to submit a Pull Request related to this connector, please read the [contributing guide](CONTRIBUTING.md) first to understand how to sign your commits.
