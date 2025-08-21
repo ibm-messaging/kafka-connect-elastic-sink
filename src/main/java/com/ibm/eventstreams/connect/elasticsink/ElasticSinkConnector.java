@@ -66,6 +66,18 @@ public class ElasticSinkConnector extends SinkConnector {
     public static final String CONFIG_DOCUMENTATION_ES_TLS_TRUSTSTORE_PASSWORD = "The password of the JKS truststore to use for the TLS connection.";
     public static final String CONFIG_DISPLAY_ES_TLS_TRUSTSTORE_PASSWORD = "TLS truststore password";
 
+    public static final String CONFIG_NAME_ES_TLS_KEYSTORE_TYPE = "es.tls.keystore.type";
+    public static final String CONFIG_DOCUMENTATION_ES_TLS_KEYSTORE_TYPE = "The type of the keystore to use for the TLS connection.";
+    public static final String CONFIG_DISPLAY_ES_TLS_KEYSTORE_TYPE = "TLS keystore type";
+
+    public static final String CONFIG_NAME_ES_TLS_TRUSTSTORE_TYPE = "es.tls.truststore.type";
+    public static final String CONFIG_DOCUMENTATION_ES_TLS_TRUSTSTORE_TYPE = "The type of the truststore to use for the TLS connection.";
+    public static final String CONFIG_DISPLAY_ES_TLS_TRUSTSTORE_TYPE = "TLS truststore type";
+
+    public static final String CONFIG_NAME_ES_TLS_SKIP_VERIFICATION = "es.tls.skip.verification";
+    public static final String CONFIG_DOCUMENTATION_ES_TLS_SKIP_VERIFICATION = "Whether to skip SSL verification for the Elasticsearch connection.";
+    public static final String CONFIG_DISPLAY_ES_TLS_SKIP_VERIFICATION = "Skip SSL verification";
+
     public static final String CONFIG_NAME_ES_HTTP_PROXY_HOST = "es.http.proxy.host";
     public static final String CONFIG_DOCUMENTATION_ES_HTTP_PROXY_HOST = "Hostname for HTTP proxy.";
     public static final String CONFIG_DISPLAY_ES_HTTP_PROXY_HOST = "HTTP Proxy host";
@@ -218,13 +230,25 @@ public class ElasticSinkConnector extends SinkConnector {
                       CONFIG_DOCUMENTATION_ES_TLS_KEYSTORE_PASSWORD, CONFIG_GROUP_ES, 11, Width.MEDIUM,
                       CONFIG_DISPLAY_ES_TLS_KEYSTORE_PASSWORD);
 
+        config.define(CONFIG_NAME_ES_TLS_KEYSTORE_TYPE, Type.STRING, "JKS", Importance.LOW,
+                      CONFIG_DOCUMENTATION_ES_TLS_KEYSTORE_TYPE, CONFIG_GROUP_ES, 12, Width.MEDIUM,
+                      CONFIG_DISPLAY_ES_TLS_KEYSTORE_TYPE);
+
         config.define(CONFIG_NAME_ES_TLS_TRUSTSTORE_LOCATION, Type.STRING, null, Importance.MEDIUM,
-                      CONFIG_DOCUMENTATION_ES_TLS_TRUSTSTORE_LOCATION, CONFIG_GROUP_ES, 12, Width.MEDIUM,
+                      CONFIG_DOCUMENTATION_ES_TLS_TRUSTSTORE_LOCATION, CONFIG_GROUP_ES, 13, Width.MEDIUM,
                       CONFIG_DISPLAY_ES_TLS_TRUSTSTORE_LOCATION);
 
         config.define(CONFIG_NAME_ES_TLS_TRUSTSTORE_PASSWORD, Type.PASSWORD, null, Importance.MEDIUM,
-                      CONFIG_DOCUMENTATION_ES_TLS_TRUSTSTORE_PASSWORD, CONFIG_GROUP_ES, 13, Width.MEDIUM,
+                      CONFIG_DOCUMENTATION_ES_TLS_TRUSTSTORE_PASSWORD, CONFIG_GROUP_ES, 14, Width.MEDIUM,
                       CONFIG_DISPLAY_ES_TLS_TRUSTSTORE_PASSWORD);
+
+        config.define(CONFIG_NAME_ES_TLS_TRUSTSTORE_TYPE, Type.STRING, "JKS", Importance.LOW,
+                      CONFIG_DOCUMENTATION_ES_TLS_TRUSTSTORE_TYPE, CONFIG_GROUP_ES, 15, Width.MEDIUM,
+                      CONFIG_DISPLAY_ES_TLS_TRUSTSTORE_TYPE);
+
+        config.define(CONFIG_NAME_ES_TLS_SKIP_VERIFICATION, Type.BOOLEAN, false, Importance.LOW,
+                      CONFIG_DOCUMENTATION_ES_TLS_SKIP_VERIFICATION, CONFIG_GROUP_ES, 16, Width.MEDIUM,
+                      CONFIG_DISPLAY_ES_TLS_SKIP_VERIFICATION);
 
         config.define(CONFIG_NAME_ES_HTTP_PROXY_HOST, Type.STRING, null, Importance.LOW,
                       CONFIG_DOCUMENTATION_ES_HTTP_PROXY_HOST, CONFIG_GROUP_ES, 14, Width.MEDIUM,
