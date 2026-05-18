@@ -1,5 +1,5 @@
 /**
- * Copyright 2020 IBM Corporation
+ * Copyright 2020, 2026 IBM Corporation
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,5 +16,5 @@
 package com.ibm.eventstreams.connect.elasticsink;
 
 public class Version {
-    public static final String VERSION = "1.0.3"; // Must match the value in pom.xml
+    public static final String VERSION = "2.0.0"; // Must match the value in pom.xml - Updated for Elasticsearch 9.x compatibility
 }
