@@ -4,8 +4,6 @@ kafka-connect-elastic-sink is a [Kafka Connect](http://kafka.apache.org/document
 
 The connector is supplied as source code which you can easily build into a JAR file.
 
-**Version 2.0.0** - Updated for compatibility with Elasticsearch 9.x (including 9.4.9)
-
 ## Contents
 
  - [Building the connector](#building-the-connector)
@@ -23,7 +21,7 @@ To build the connector, you must have the following installed:
 
  - [git](https://git-scm.com/)
  - [Maven 3.0 or later](https://maven.apache.org)
- - Java 8 or later
+ - Java 21 or later
 
 
  Clone the repository with the following command:
@@ -55,7 +53,7 @@ To run the connector, you must have:
 * The JAR from building the connector
 * A properties file containing the configuration for the connector
 * Apache Kafka 4.2.0 or later, either standalone or included as part of an offering such as IBM Event Streams
-* Elasticsearch 7.0.0 or later (tested and compatible with Elasticsearch 9.4.9)
+* Elasticsearch 7.0.0 or later (tested and compatible with Elasticsearch 9.4.1)
 
 The connector can be run in a Kafka Connect worker in either standalone (single process) or distributed mode. It's a good idea to start in standalone mode.
 
@@ -225,7 +223,7 @@ For issues relating specifically to this connector, please use the [GitHub issue
 
 ## License
 
-Copyright 2020, 2023 IBM Corporation
+Copyright 2020, 2026 IBM Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

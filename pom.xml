@@ -28,7 +28,7 @@
   </organization>
   <url>http://ibm.com</url>
   <description>
-      A Kafka Connect connector for copying data from Apache Kafka into Elasticsearch 9.x.
+      A Kafka Connect connector for copying data from Apache Kafka into Elasticsearch
   </description>
   <licenses>
     <license>

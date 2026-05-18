@@ -3,7 +3,7 @@
 ## Version 2.0.0 (2026-05-17)
 
 ### Major Updates
-- **Elasticsearch 9.x Compatibility**: Updated connector to be compatible with Elasticsearch 9.4.9
+- **Elasticsearch 9.x Compatibility**: Updated connector to be compatible with Elasticsearch 9.4.1
 - **Kafka 4.2.0 Support**: Updated to latest Kafka version 4.2.0
 - **Dependency Updates**: Updated all dependencies to latest stable versions
 - **TLS 1.3 Support**: Added TLS 1.3 protocol support alongside TLS 1.2 for enhanced security
@@ -28,7 +28,7 @@
 - Jetty dependencies are now shaded under `com.ibm.eventstreams.shaded.jetty` package
 
 ### Testing
-- Connector tested and verified compatible with Elasticsearch 9.4.9
+- Connector tested and verified compatible with Elasticsearch 9.4.1
 - Maintains backward compatibility with Elasticsearch 7.x and 8.x
 
 ### Breaking Changes

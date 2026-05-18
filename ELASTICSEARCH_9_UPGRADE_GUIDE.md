@@ -1,7 +1,7 @@
 # Elasticsearch 9.x Upgrade Guide
 
 ## Overview
-This guide helps you upgrade the Kafka Connect Elasticsearch Sink Connector to version 2.0.0, which adds support for Elasticsearch 9.4.9 and later versions.
+This guide helps you upgrade the Kafka Connect Elasticsearch Sink Connector to version 2.0.0, which adds support for Elasticsearch 9.4.1 and later versions.
 
 ## What's New in Version 2.0.0
 
@@ -22,7 +22,7 @@ Before upgrading, ensure you have:
 - Java 21 or later installed
 - Maven 3.0 or later
 - Kafka 4.2.0 or later
-- Elasticsearch 7.0.0 or later (tested with 9.4.9)
+- Elasticsearch 7.0.0 or later (tested with 9.4.1)
 
 ## Upgrade Steps
 
