@@ -21,7 +21,7 @@ To build the connector, you must have the following installed:
 
  - [git](https://git-scm.com/)
  - [Maven 3.0 or later](https://maven.apache.org)
- - Java 8 or later
+ - Java 21 or later
 
 
  Clone the repository with the following command:
@@ -52,8 +52,8 @@ For more information see the [README](quickstart/README-QS.md) in that directory
 To run the connector, you must have:
 * The JAR from building the connector
 * A properties file containing the configuration for the connector
-* Apache Kafka 2.0.0 or later, either standalone or included as part of an offering such as IBM Event Streams
-* Elasticsearch 7.0.0 or later
+* Apache Kafka 4.2.0 or later, either standalone or included as part of an offering such as IBM Event Streams
+* Elasticsearch 7.0.0 or later (tested and compatible with Elasticsearch 9.4.1)
 
 The connector can be run in a Kafka Connect worker in either standalone (single process) or distributed mode. It's a good idea to start in standalone mode.
 
@@ -223,7 +223,7 @@ For issues relating specifically to this connector, please use the [GitHub issue
 
 ## License
 
-Copyright 2020, 2023 IBM Corporation
+Copyright 2020, 2026 IBM Corporation
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

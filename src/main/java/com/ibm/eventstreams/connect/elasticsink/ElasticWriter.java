@@ -506,10 +506,11 @@ public class ElasticWriter {
             throw new ConnectException(e);
         }
 
-        // Force the use of TLSv1.2 or later
+        // Force the use of TLSv1.2 and TLSv1.3 for Elasticsearch 9.x compatibility
         // Set the Protocols and CipherSuites that are permitted
         setDefaults(sslContextFactory);
 
+        // Create HttpClient with or without SSL context factory (Jetty 9.4 API)
         if (protocol.equals("https"))
             httpClient = new HttpClient(sslContextFactory);
         else
@@ -558,13 +559,13 @@ public class ElasticWriter {
     private void setDefaults(SslContextFactory.Client sslContextFactory) {
         log.trace("[{}] Entry {}.setDefaults", Thread.currentThread().getId(),classname);
 
-        // Only support TLS 1.2
-        String[] protocols = new String[] { "TLSv1.2" };
+        // Support TLS 1.2 and TLS 1.3 for Elasticsearch 9.x compatibility
+        String[] protocols = new String[] { "TLSv1.2", "TLSv1.3" };
         sslContextFactory.setIncludeProtocols(protocols);
 
         String vendor = System.getProperty("java.vendor");
         if (vendor != null && vendor.toUpperCase().contains("IBM")) {
-            log.debug("Doing manual exclusion of ciphersuites");
+            log.debug("Doing manual exclusion of ciphersuites for IBM JRE");
 
             // Exclude weak / insecure ciphers
             sslContextFactory.setExcludeCipherSuites("^.*_(MD5|SHA|SHA1)$");

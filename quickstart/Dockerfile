@@ -1,14 +1,14 @@
-FROM quay.io/strimzi/kafka:latest-kafka-3.6.1 as kafka
+FROM quay.io/strimzi/kafka:latest-kafka-4.2.0 AS kafka
 
-FROM ibm-semeru-runtimes:open-17-jre
+FROM ibm-semeru-runtimes:open-21-jre
 
-RUN addgroup --gid 5000 --system esgroup && \
-    adduser --uid 5000 --ingroup esgroup --system esuser
+RUN groupadd --gid 5000 --system esgroup && \
+    useradd --uid 5000 -g esgroup --system esuser
 
 # Copy over the files we need to run a Kafka connector
 COPY --chown=esuser:esgroup --from=kafka /opt/kafka/bin/ /opt/kafka/bin/
 COPY --chown=esuser:esgroup --from=kafka /opt/kafka/libs/ /opt/kafka/libs/
-COPY --chown=esuser:esgroup --from=kafka /opt/kafka/config/connect-log4j.properties /opt/kafka/config/
+COPY --chown=esuser:esgroup --from=kafka /opt/kafka/config/ /opt/kafka/config/
 RUN mkdir /opt/kafka/logs && chown esuser:esgroup /opt/kafka/logs
 
 # These are the key files needed from this repository to get something running. The hostnames in the
